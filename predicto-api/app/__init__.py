@@ -4,15 +4,28 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
+import os
+from flask import Flask
+from flask_mail import Mail
 
 load_dotenv()  # Ini akan membaca file .env
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 jwt = JWTManager()
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
+
+    # Konfigurasi mail
+    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = 587
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = os.getenv("MAIL")
+    app.config['MAIL_PASSWORD'] = os.getenv("PASS_MAIL")
+
+    mail.init_app(app)
 
     # Konfigurasi database & secret
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URI")  # Sesuaikan dengan nama variabel di .env

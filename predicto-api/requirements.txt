@@ -4,3 +4,5 @@ Flask-Bcrypt
 Flask-JWT-Extended
 python-dotenv
 pymysql
+cryptography
+Flask-Mail

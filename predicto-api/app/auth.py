@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User
 from . import db, bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_mail import Message
+from app import mail 
 import uuid
 
 
@@ -75,3 +77,30 @@ def me():
         "email": user.email,
         "created_at": user.created_at
     }), 200
+
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"message": "Email is required!"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "User with that email does not exist!"}), 404
+
+    # Generate token (bisa disimpan ke DB kalau mau verifikasi nanti)
+    reset_token = str(uuid.uuid4())
+
+    # Kirim email
+    msg = Message(
+        subject="Password Reset Request",
+        sender="emailmu@gmail.com",
+        recipients=[email],
+        body=f"Hi {user.username}, click the link to reset your password: http://localhost:5000/reset-password/{reset_token}"
+    )
+    mail.send(msg)
+
+    return jsonify({"message": "Password reset email has been sent."}), 200
