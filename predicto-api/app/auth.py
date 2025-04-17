@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models import User
+from app.models import User, PasswordResetToken
+from datetime import datetime, timedelta
 from . import db, bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from flask_mail import Message
@@ -84,23 +85,66 @@ def forgot_password():
     data = request.get_json()
     email = data.get('email')
 
-    if not email:
-        return jsonify({"message": "Email is required!"}), 400
-
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "User with that email does not exist!"}), 404
+        return jsonify({"message": "User not found"}), 404
 
-    # Generate token (bisa disimpan ke DB kalau mau verifikasi nanti)
+    # Generate token
     reset_token = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(hours=1)
 
-    # Kirim email
+    # Simpan ke tabel reset token
+    token_entry = PasswordResetToken(
+        id=str(uuid.uuid4()),
+        user_id=user.id,
+        token=reset_token,
+        expires_at=expires_at
+    )
+    db.session.add(token_entry)
+    db.session.commit()
+
+    # Kirim email ke user
+    reset_link = f"http://localhost:5000/reset-password/{reset_token}"
     msg = Message(
-        subject="Password Reset Request",
-        sender="emailmu@gmail.com",
+        subject="Reset Password",
+        sender="youremail@gmail.com",
         recipients=[email],
-        body=f"Hi {user.username}, click the link to reset your password: http://localhost:5000/reset-password/{reset_token}"
+        body=f"Click here to reset your password: {reset_link}"
     )
     mail.send(msg)
 
-    return jsonify({"message": "Password reset email has been sent."}), 200
+    return jsonify({"message": "Password reset email sent. Check your email !"})
+
+
+
+@auth_bp.route('/reset-password/<token>', methods=['POST'])
+def reset_password(token):
+    data = request.get_json()
+    new_password = data.get('new_password')
+
+    if not new_password:
+        return jsonify({"message": "New password is required"}), 400
+
+    # Cek token di database
+    token_entry = PasswordResetToken.query.filter_by(token=token, used=False).first()
+
+    if not token_entry:
+        return jsonify({"message": "Invalid or expired token"}), 400
+
+    # Cek apakah token sudah kadaluarsa
+    if token_entry.expires_at < datetime.utcnow():
+        return jsonify({"message": "Token has expired"}), 400
+
+    # Update password user
+    user = User.query.get(token_entry.user_id)
+    user.password_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+    # Tandai token sudah dipakai
+    token_entry.used = True
+
+    db.session.commit()
+
+    return jsonify({"message": "Password has been successfully reset"}), 200
+
+
+

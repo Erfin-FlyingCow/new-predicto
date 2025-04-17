@@ -36,10 +36,6 @@ class User(db.Model):
         return f"<User {self.username}>"
     
 
-
-from datetime import datetime
-from . import db
-
 class History(db.Model):
     __tablename__ = 'histories'
 
@@ -56,4 +52,16 @@ class History(db.Model):
 
     def __repr__(self):
         return f"<History {self.id}>"
+    
 
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_tokens'
+
+    id = db.Column(db.String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String(255), db.ForeignKey('users.id'), nullable=False)
+    token = db.Column(db.String(255), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy=True))
