@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1440, maximum-scale=1.0" />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="https://animaproject.s3.amazonaws.com/home/favicon.png"
+    />
+    <meta name="og:type" content="website" />
+    <meta name="twitter:card" content="photo" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/login.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:500,600"
+      rel="stylesheet"
+    />
+    <title>Login Page</title>
+  </head>
+  <body>
+    <div class="container-center-horizontal">
+      <div class="login-page screen">
+        <img
+          class="logo_1-1-fmx5hU"
+          src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
+          alt="logo_1 1"
+        />
+        <div class="rectangle-1-fmx5hU"></div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+          <h1 class="title-fmx5hU">Welcome Back!</h1>
+          <div class="belum-punya-akun-register-fmx5hU">
+            Belum punya akun? <a href="{{ url_for('register') }}">Register</a>
+          </div>
+
+          <div class="rectangle-2-fmx5hU"></div>
+          <input
+            type="email"
+            name="email"
+            class="email-input"
+            placeholder="Email"
+            required
+          />
+
+          <div class="rectangle-3-fmx5hU"></div>
+          <input
+            type="password"
+            name="password"
+            class="password-input"
+            placeholder="Password"
+            required
+          />
+
+          <a href="{{ url_for('lupa_password') }}" class="lupa-paswword-fmx5hU"
+            >Lupa Password?</a
+          >
+
+          <button type="submit" class="rectangle-4-fmx5hU">
+            <div class="login-fmx5hU">Login</div>
+          </button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

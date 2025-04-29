@@ -1,0 +1,309 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+
+/* Typography/Font */
+:root {
+  --black: #000000;
+  --font-size-l: clamp(18px, 2vw, 27px);
+  --font-size-m: clamp(14px, 1.5vw, 18px);
+  --font-size-xl: clamp(24px, 3vw, 40px);
+  --font-size-xxl: clamp(32px, 4vw, 48px);
+  --font-family-poppins: "Poppins", Helvetica;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.screen textarea:focus,
+.screen input:focus {
+  outline: none;
+}
+
+.screen * {
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+
+.container-center-horizontal {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.container-center-horizontal > * {
+  width: 100%;
+}
+
+.valign-text-middle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Login Page Styles */
+.login-page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  position: relative;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+.login-page .logo_1-1-fmx5hU {
+  max-width: 60%;
+  max-height: 60vh;
+  object-fit: contain;
+  position: absolute;
+  left: 10%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.login-page .rectangle-1-fmx5hU {
+  background-color: #000000;
+  height: 100%;
+  width: 50%;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.login-page form {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40%;
+  max-width: 532px;
+  z-index: 2;
+}
+
+.login-page .lupa-paswword-fmx5hU {
+  background-color: transparent;
+  color: #918e9c;
+  font-family: var(--font-family-poppins);
+  font-size: var(--font-size-m);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0px;
+  line-height: normal;
+  position: relative;
+  text-align: right;
+  display: block;
+  margin-left: auto;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+  text-decoration: none;
+}
+
+.login-page .rectangle-4-fmx5hU {
+  background-color: #3181c6;
+  border-radius: 10px;
+  height: 60px;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.login-page .login-fmx5hU {
+  background-color: transparent;
+  color: var(--black);
+  font-family: var(--font-family-poppins);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 600;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  width: 100%;
+  text-align: center;
+}
+
+/* Hide the rectangle divs that are causing duplicate fields */
+.login-page .rectangle-2-fmx5hU,
+.login-page .rectangle-3-fmx5hU {
+  display: none;
+}
+
+.login-page .flowbiteeye-slash-solid-fmx5hU {
+  background-color: transparent;
+  height: 30px;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.login-page .group-Kdx2A1 {
+  background-color: transparent;
+  height: 20px;
+  width: 25px;
+  position: relative;
+}
+
+.login-page .password-fmx5hU {
+  display: none;
+}
+
+.login-page .title-fmx5hU {
+  background-color: transparent;
+  color: #fcfafc;
+  font-family: var(--font-family-poppins);
+  font-size: var(--font-size-xxl);
+  font-style: normal;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  letter-spacing: 0px;
+  line-height: normal;
+  width: 100%;
+}
+
+.login-page .email-fmx5hU {
+  display: none;
+}
+
+.login-page .belum-punya-akun-register-fmx5hU {
+  background-color: transparent;
+  color: #918e9c;
+  font-family: var(--font-family-poppins);
+  font-size: var(--font-size-m);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0px;
+  line-height: normal;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.login-page .belum-punya-akun-register-fmx5hU a {
+  color: #3181c6;
+  text-decoration: none;
+}
+
+/* Form input fields */
+.login-page .email-input,
+.login-page .password-input {
+  background-color: #e0e0e0;
+  border: none;
+  width: 100%;
+  height: 60px;
+  padding: 0 20px;
+  font-family: var(--font-family-poppins);
+  font-size: var(--font-size-m);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Fix placeholder text */
+.login-page .email-input::placeholder,
+.login-page .password-input::placeholder {
+  color: #666;
+  opacity: 1;
+}
+
+/* Media Queries for Responsive Design */
+@media screen and (max-width: 1200px) {
+  .login-page form {
+    width: 45%;
+    right: 2.5%;
+  }
+
+  .login-page .logo_1-1-fmx5hU {
+    left: 10%;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-page .logo_1-1-fmx5hU {
+    position: relative;
+    max-width: 70%;
+    max-height: 30vh;
+    margin: 2rem auto;
+    left: auto;
+    top: auto;
+    transform: none;
+  }
+
+  .login-page .rectangle-1-fmx5hU {
+    width: 100%;
+    height: 70%;
+    top: 30%;
+  }
+
+  .login-page form {
+    position: relative;
+    width: 90%;
+    max-width: 532px;
+    right: auto;
+    top: auto;
+    transform: none;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .login-page .logo_1-1-fmx5hU {
+    max-height: 25vh;
+    max-width: 80%;
+  }
+
+  .login-page .rectangle-1-fmx5hU {
+    height: 75%;
+    top: 25%;
+  }
+
+  .login-page form {
+    width: 85%;
+    padding: 1rem 0;
+  }
+
+  .login-page .title-fmx5hU {
+    text-align: center;
+  }
+
+  .login-page .belum-punya-akun-register-fmx5hU {
+    text-align: center;
+  }
+
+  .login-page .rectangle-4-fmx5hU {
+    height: 60px;
+  }
+
+  .login-page .email-input,
+  .login-page .password-input {
+    height: 60px;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 375px) {
+  .login-page .logo_1-1-fmx5hU {
+    max-height: 20vh;
+  }
+
+  .login-page .rectangle-1-fmx5hU {
+    height: 80%;
+    top: 20%;
+  }
+
+  .login-page form {
+    width: 90%;
+  }
+}

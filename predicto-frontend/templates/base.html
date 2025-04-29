@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/globals.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    {% block additional_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="landing-page">
+      <div class="div">
+        <!-- Navbar Section -->
+        <div class="overlap">
+          <div class="overlap">
+            <div class="rectangle"></div>
+            <div class="text-wrapper-2">Predicto.</div>
+            <img
+              class="logo-removebg"
+              src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            />
+            <!-- Login button - redirects to login route -->
+            <a href="{{ url_for('login') }}">
+              <div class="rectangle-3"></div>
+              <div class="text-wrapper-4">Login</div>
+            </a>
+            <!-- Register button - redirects to register route -->
+            <a href="{{ url_for('register') }}">
+              <div class="rectangle-2"></div>
+              <div class="text-wrapper-3">Register</div>
+            </a>
+          </div>
+          <!-- Additional register button with styling -->
+          <a href="{{ url_for('register') }}" class="overlap-group">
+            <div class="text-wrapper-5">Register</div>
+          </a>
+          <!-- Additional login button with styling -->
+          <a href="{{ url_for('login') }}" class="div-wrapper">
+            <div class="text-wrapper-6">Login</div>
+          </a>
+          <!-- Navigation links with anchors -->
+          <a href="#about" class="text-wrapper-7">About</a>
+          <a href="#pricing" class="text-wrapper-8">Pricing</a>
+          <a href="#features" class="text-wrapper-9">Features</a>
+          <a href="#" class="text-wrapper-10">Home</a>
+        </div>
+
+        <!-- Content Block -->
+        {% block content %}{% endblock %}
+
+        <!-- Footer Section -->
+        <img
+          class="logo-removebg-3"
+          src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+        />
+        <div class="text-wrapper-42">Quick Links</div>
+        <a href="#" class="text-wrapper-43">Home</a>
+        <div class="text-wrapper-44">Machine Learning</div>
+        <div class="text-wrapper-45">Predicto</div>
+        <div class="text-wrapper-46">Email: contact@predicto.com</div>
+        <div class="text-wrapper-47">Lokasi: Depok, Jawa Barat</div>
+        <div class="text-wrapper-48">Time Series Forecasting</div>
+        <div class="text-wrapper-49">Flask Web</div>
+        <div class="text-wrapper-50">Chatbot Interaktif</div>
+        <a href="#features" class="text-wrapper-51">Fitur</a>
+        <a href="#pricing" class="text-wrapper-52">Pricing</a>
+        <a href="#about" class="text-wrapper-53">About</a>
+        <div class="text-wrapper-54">Technology</div>
+        <div class="text-wrapper-55">Contant Us</div>
+      </div>
+    </div>
+  </body>
+</html>
