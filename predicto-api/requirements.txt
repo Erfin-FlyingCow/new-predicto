@@ -6,3 +6,11 @@ python-dotenv
 pymysql
 cryptography
 Flask-Mail
+blinker
+click
+colorama
+Flask
+itsdangerous
+Jinja2
+MarkupSafe
+Werkzeug
