@@ -307,3 +307,24 @@
     width: 90%;
   }
 }
+
+.flash-messages {
+  margin-bottom: 20px;
+}
+
+.flash {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+}
+
+.flash.error {
+  background-color: #f44336; /* Red for error */
+}
+
+.flash.success {
+  background-color: #4CAF50; /* Green for success */
+}
+

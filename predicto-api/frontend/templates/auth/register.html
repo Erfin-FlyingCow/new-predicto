@@ -24,15 +24,26 @@
           src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
           alt="Predicto Logo"
         />
-        <div class="rectangle-1-FG3P4s"></div>
+        <div class="rectangle-1-FG3P4s">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        </div>
 
         <form method="POST" action="{{ url_for('register') }}">
           <div class="rectangle-5-FG3P4s"></div>
           <input
             type="text"
-            name="nama"
+            name="username"
             class="nama-FG3P4s poppins-medium-black-27px"
-            placeholder="Nama"
+            placeholder="Username"
             required
           />
 

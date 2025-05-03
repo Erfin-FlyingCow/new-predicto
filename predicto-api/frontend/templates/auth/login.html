@@ -28,7 +28,16 @@
           src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
           alt="logo_1 1"
         />
-        <div class="rectangle-1-fmx5hU"></div>
+        <div class="rectangle-1-fmx5hU">{% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+</div>
 
         <form method="POST" action="{{ url_for('login') }}">
           <h1 class="title-fmx5hU">Welcome Back!</h1>
@@ -38,10 +47,10 @@
 
           <div class="rectangle-2-fmx5hU"></div>
           <input
-            type="email"
-            name="email"
+            type="text"
+            name="username"
             class="email-input"
-            placeholder="Email"
+            placeholder="Username"
             required
           />
 
@@ -55,8 +64,7 @@
           />
 
           <a href="{{ url_for('lupa_password') }}" class="lupa-paswword-fmx5hU"
-            >Lupa Password?</a
-          >
+            >Lupa Password?</a>
 
           <button type="submit" class="rectangle-4-fmx5hU">
             <div class="login-fmx5hU">Login</div>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1440, maximum-scale=1.0" />
+    <title>Dashboard - Sales Prediction</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:500,600"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/dashboard.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container-center-horizontal">
+      <div class="dashboard-page screen">
+        <!-- Main background -->
+        <div class="rectangle-6-rWtV9q"></div>
+
+        <!-- Logo section -->
+        <img
+          class="logo_1-removebg-preview-1-1-rWtV9q"
+          src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+          alt="Logo"
+        />
+        <h1 class="title-rWtV9q">Dashboard</h1>
+
+        <!-- Profile section -->
+        <div class="ellipse-1-rWtV9q"></div>
+        <img
+          class="material-symbolsperson-rounded-rWtV9q"
+          src="{{ url_for('static', filename='assets/person.svg') }}"
+          alt="Profile"
+        />
+
+        <!-- Sidebar navigation -->
+        <div class="dashboard-rWtV9q">Dashboard</div>
+        <img
+          class="vector-xi2QS5 vector"
+          src="{{ url_for('static', filename='assets/dashboard.svg') }}"
+          alt="Vector"
+        />
+
+        <div class="prediction-rWtV9q poppins-semi-bold-black-18px">
+          Prediction
+        </div>
+        <img
+          class="vector-Y67GAY vector"
+          src="{{ url_for('static', filename='assets/prediction.svg') }}"
+          alt="Vector"
+        />
+
+        <div class="history-prediction-rWtV9q poppins-semi-bold-black-18px">
+          History Prediction
+        </div>
+        <img
+          class="vector-LL3oRX vector"
+          src="{{ url_for('static', filename='assets/history.svg') }}"
+          alt="Vector"
+        />
+
+        <div class="chatbot-rWtV9q poppins-semi-bold-black-18px">Chatbot</div>
+        <img
+          class="vector-WoSxvp vector"
+          src="{{ url_for('static', filename='assets/chatbot.svg') }}"
+          alt="Vector"
+        />
+
+        <div class="setting-rWtV9q poppins-semi-bold-black-18px">Setting</div>
+        <img
+          class="vector-mf8xWQ vector"
+          src="{{ url_for('static', filename='assets/settings.svg') }}"
+          alt="Vector"
+        />
+
+        <div class="log-out-rWtV9q poppins-semi-bold-black-18px">Log out</div>
+        <img
+          class="vector-rWtV9q vector"
+          src="{{ url_for('static', filename='assets/logout.svg') }}"
+          alt="Vector"
+        />
+
+        <!-- Prediction Boxes - Top Row -->
+        <!-- 1. Tomorrow's Prediction -->
+        <div class="rectangle-7-rWtV9q"></div>
+        <div class="prediksi-besok poppins-semi-bold-black-18px">
+          Prediksi Besok
+        </div>
+
+        <!-- 2. Weekly Prediction -->
+        <div class="rectangle-8-rWtV9q"></div>
+        <div class="prediksi-mingguan-rWtV9q poppins-semi-bold-black-18px">
+          Prediksi Mingguan
+        </div>
+
+        <!-- 3. Monthly Prediction -->
+        <div class="rectangle-9-rWtV9q"></div>
+        <div class="prediksi-bulanan-rWtV9q poppins-semi-bold-black-18px">
+          Prediksi Bulanan
+        </div>
+
+        <!-- Middle Charts and Insights -->
+        <!-- 1. Sales Trend Chart -->
+        <div class="rectangle-10-rWtV9q"></div>
+        <div class="tren-penjualan-rWtV9q poppins-semi-bold-black-18px">
+          Tren Penjualan
+        </div>
+
+        <!-- 2. Top iPhone -->
+        <div class="rectangle-11-rWtV9q"></div>
+        <div class="i-phone-terlaris-rWtV9q poppins-semi-bold-black-18px">
+          iPhone Terlaris
+        </div>
+
+        <!-- 3. Chatbot Insights -->
+        <div class="rectangle-12-rWtV9q"></div>
+        <div class="insight-chatbot-rWtV9q poppins-semi-bold-black-18px">
+          Insight Chatbot
+        </div>
+
+        <!-- Bottom - Prediction History Section -->
+        <div class="rectangle-13-rWtV9q"></div>
+        <div class="riwayat-prediksi-rWtV9q poppins-semi-bold-black-18px">
+          Riwayat Prediksi
+        </div>
+        <div class="tanggal-rWtV9q poppins-semi-bold-black-18px">Tanggal</div>
+        <div class="jenis-prediksi-rWtV9q poppins-semi-bold-black-18px">
+          Jenis Prediksi
+        </div>
+        <div class="selengkapnya-rWtV9q poppins-semi-bold-black-18px">
+          Selengkapnya
+        </div>
+        <img
+          class="solararrow-right-outline-rWtV9q"
+          src="{{ url_for('static', filename='assets/right-arrow.svg') }}"
+          alt="Arrow"
+        />
+      </div>
+    </div>
+  </body>
+</html>

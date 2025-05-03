@@ -6,19 +6,30 @@ from . import db, bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from flask_mail import Message
 from app import mail 
+import re 
 import uuid
 
 
 auth_bp = Blueprint('auth', __name__)
 
 # Endpoint untuk register pengguna baru
+import re  # Tambahkan ini di bagian atas file jika belum ada
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
 
-    # Validasi input
+    # Validasi input dasar
     if not data.get('username') or not data.get('email') or not data.get('password'):
         return jsonify({"message": "Username, email, and password are required!"}), 400
+
+    password = data['password']
+
+    # Validasi password: minimal 8 karakter, ada huruf besar dan angka
+    if len(password) < 8 or not re.search(r'[A-Z]', password) or not re.search(r'\d', password):
+        return jsonify({
+            "message": "Password must be at least 8 characters long, contain at least one uppercase letter and one digit."
+        }), 400
 
     # Cek jika username atau email sudah ada
     if User.query.filter_by(username=data['username']).first():
@@ -26,19 +37,19 @@ def register():
     if User.query.filter_by(email=data['email']).first():
         return jsonify({"message": "Email already exists!"}), 400
 
-    # Buat pengguna baru (password langsung di-hash di dalam class User)
+    # Buat pengguna baru
     new_user = User(
-        id=str(uuid.uuid4()),  # Generate ID unik
+        id=str(uuid.uuid4()),
         username=data['username'],
         email=data['email'],
-        password=data['password']
+        password=password  # Pastikan hashing dilakukan di dalam model User
     )
-    
-    # Simpan ke database
+
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({"message": "User created successfully!"}), 201
+
 
 
 # Endpoint untuk login pengguna
@@ -124,6 +135,12 @@ def reset_password(token):
 
     if not new_password:
         return jsonify({"message": "New password is required"}), 400
+
+    # Validasi password: minimal 8 karakter, huruf besar, dan angka
+    if len(new_password) < 8 or not re.search(r'[A-Z]', new_password) or not re.search(r'\d', new_password):
+        return jsonify({
+            "message": "Password must be at least 8 characters long, contain at least one uppercase letter and one digit."
+        }), 400
 
     # Cek token di database
     token_entry = PasswordResetToken.query.filter_by(token=token, used=False).first()
