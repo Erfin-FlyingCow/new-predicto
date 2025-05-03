@@ -23,11 +23,13 @@
   <body>
     <div class="container-center-horizontal">
       <div class="login-page screen">
-        <img
-          class="logo_1-1-fmx5hU"
-          src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
-          alt="logo_1 1"
-        />
+        <a href="{{ url_for('home') }}">
+          <img
+            class="logo_1-1-fmx5hU"
+            src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
+            alt="logo_1 1"
+          />
+        </a>        
         <div class="rectangle-1-fmx5hU">{% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="flash-messages">
@@ -37,7 +39,7 @@
             </div>
           {% endif %}
         {% endwith %}
-</div>
+    </div>
 
         <form method="POST" action="{{ url_for('login') }}">
           <h1 class="title-fmx5hU">Welcome Back!</h1>

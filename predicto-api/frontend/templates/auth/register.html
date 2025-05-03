@@ -19,11 +19,13 @@
   <body>
     <div class="container-center-horizontal">
       <div class="register-page screen">
-        <img
-          class="logo_1-1-FG3P4s"
-          src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
-          alt="Predicto Logo"
-        />
+        <a href="{{ url_for('home') }}">
+          <img
+            class="logo_1-1-FG3P4s"
+            src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
+            alt="Predicto Logo"
+          />
+        </a>
         <div class="rectangle-1-FG3P4s">
           {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
