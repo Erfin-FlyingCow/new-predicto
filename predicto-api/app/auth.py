@@ -12,8 +12,6 @@ import uuid
 
 auth_bp = Blueprint('auth', __name__)
 
-# Endpoint untuk register pengguna baru
-import re  # Tambahkan ini di bagian atas file jika belum ada
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

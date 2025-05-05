@@ -15,3 +15,15 @@ Jinja2
 MarkupSafe
 Werkzeug
 requests
+flash
+gunicorn
+pandas
+matplotlib
+seaborn
+statsmodels
+numpy
+datetime
+xgboost==2.1.4
+holidays
+scikit-learn
+joblib
