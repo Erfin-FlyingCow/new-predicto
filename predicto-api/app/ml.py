@@ -13,9 +13,13 @@ import holidays
 from xgboost import XGBRegressor
 import joblib 
 import os
+from statsmodels.tsa.seasonal import STL
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from keras._tf_keras.keras.models import load_model
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_path_daily = os.path.join(BASE_DIR, 'model_ml', 'xgboost_daily_model.pkl')
+model_path_weakly = os.path.join(BASE_DIR, 'model_ml', 'model_stt_attlstm_weekly.keras')
 
 ml_bp = Blueprint('ml', __name__)
 
@@ -32,7 +36,7 @@ def predict():
     freq_data = request.form['frequency']
 
      # Validasi frekuensi
-    if freq_data not in ['D', 'W', 'ME']:
+    if freq_data not in ['D', 'W', 'ME','d','w','me']:
         return jsonify({"message": "Invalid frequency, choose 'D', 'W', or 'ME'"}), 400
 
     
@@ -449,5 +453,115 @@ def predict():
                 "error": str(e)
                 }), 500
             
-    
-            
+    elif freq_data.upper() == 'W':
+            try:
+                # === 1. Decompose ===
+                stl = STL(df_result['sales'], period=52)
+                res = stl.fit()
+                resid = res.resid
+                trend = res.trend
+                seasonal = res.seasonal
+                future_steps_weekly = 12
+
+                # === 2. Scaling ===
+                scaler_resid = StandardScaler()
+                scaler_other = MinMaxScaler()
+                resid_scaled = scaler_resid.fit_transform(resid.values.reshape(-1, 1)).flatten()
+                other_scaled = scaler_other.fit_transform(np.vstack([trend, seasonal]).T)
+
+                # === 3. Sequence Building ===
+                def create_dual_sequences(resid, other, window_size):
+                    X_resid, X_other, y = [], [], []
+                    for i in range(len(resid) - window_size):
+                        X_resid.append(resid[i:i+window_size])
+                        X_other.append(other[i:i+window_size])
+                        y.append(resid[i+window_size])
+                    return np.expand_dims(np.array(X_resid), 2), np.array(X_other), np.array(y)
+
+                window_size = 16
+                X1, X2, y = create_dual_sequences(resid_scaled, other_scaled, window_size)
+                X1_test = X1.astype(np.float32)
+                X2_test = X2.astype(np.float32)
+                resid_input_test = y.astype(np.float32).reshape(-1, 1)
+
+                # === 4. Load Model ===
+                model = load_model(model_path_weakly)
+
+                # === 5. Forecasting ===
+                future_resid_preds = []
+                current_X1 = X1_test[-1].copy()
+                current_X2 = X2_test[-1].copy()
+                current_resid = resid_input_test[-1].copy()
+
+                for i in range(future_steps_weekly):
+                    pred_scaled = model.predict([
+                        np.expand_dims(current_X1, 0),
+                        np.expand_dims(current_X2, 0),
+                        np.expand_dims(current_resid, 0)
+                    ], verbose=0).flatten()[0]
+
+                    pred_resid = scaler_resid.inverse_transform([[pred_scaled]])[0, 0]
+                    future_resid_preds.append(pred_resid)
+
+                    current_X1 = np.roll(current_X1, -1)
+                    current_X1[-1] = pred_scaled
+
+                    current_week = (len(resid) + i) % 52
+                    trend_val = trend.values[-1]
+                    seasonal_val = seasonal.values[current_week]
+
+                    current_X2 = np.roll(current_X2, -1, axis=0)
+                    current_X2[-1] = scaler_other.transform([[trend_val, seasonal_val]])[0]
+                    current_resid = np.array([pred_scaled])
+
+                # === 6. Reconstruct Forecast ===
+                last_date_weekly = pd.to_datetime(df_result['date']).iloc[-1]
+                future_dates_weekly = [last_date_weekly + timedelta(weeks=i+1) for i in range(future_steps_weekly)]
+                trend_forecast = [trend.values[-1]] * future_steps_weekly
+                seasonal_forecast = [seasonal.values[(len(resid) + i) % 52] for i in range(future_steps_weekly)]
+
+                future_forecast_attlstm = (
+                    np.array(future_resid_preds)
+                    + np.array(trend_forecast)
+                    + np.array(seasonal_forecast)
+                )
+
+                margin = 0.10
+                lower_bound_attlstm = future_forecast_attlstm * (1 - margin)
+                upper_bound_attlstm = future_forecast_attlstm * (1 + margin)
+
+                # === 7. Buat Output ke Dictionary ===
+                forecast_dict = {
+                    'status': 'success',
+                    'forecast': []
+                }
+
+                for i in range(future_steps_weekly):
+                    forecast_dict['forecast'].append({
+                        'tanggal': future_dates_weekly[i].strftime('%Y-%m-%d'),
+                        'Prediksi Penjualan (Rp)': int(round(future_forecast_attlstm[i])),
+                        'Lower Bound (Rp)': int(round(lower_bound_attlstm[i])),
+                        'upper_bound (Rp)': int(round(upper_bound_attlstm[i]))
+                    })
+
+                # Format hasil ke DataFrame
+                attlstm_results = pd.DataFrame(forecast_dict['forecast'])
+
+                # Print hasil prediksi mingguan
+                print("\nPrediksi ATT-LSTM 4 Minggu Ke Depan:")
+                print(attlstm_results.head(4))
+
+                result_json = attlstm_results.to_dict(orient='records')
+
+                return jsonify({
+                    "message": "✅ Prediksi berhasil",
+                    "data": result_json
+                }), 200
+
+            except Exception as e:
+                traceback_str = traceback.format_exc()
+                print(f"❌ Terjadi error:\n{traceback_str}")
+                return jsonify({
+                    "message": "❌ Terjadi error saat melakukan prediksi.",
+                    "error": str(e)
+                }), 500
