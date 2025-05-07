@@ -4,13 +4,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import traceback
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from datetime import datetime, timedelta
 import holidays
 from xgboost import XGBRegressor
-import joblib
+import joblib 
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path_daily = os.path.join(BASE_DIR, 'model_ml', 'xgboost_daily_model.pkl')
 
 ml_bp = Blueprint('ml', __name__)
 
@@ -196,7 +201,6 @@ def predict():
     ):
         try:
             print("Memuat dataset...")
-            # Cek jika file ada
             df = pd.read_csv(csv_data)
 
         except FileNotFoundError:
@@ -208,38 +212,32 @@ def predict():
             return None
 
         try:
-            # Pemeriksaan dan persiapan data
             print("Memproses data...")
             print(f"Dataset mentah memiliki {df.shape[0]} baris dan {df.shape[1]} kolom")
             print("Mengecek data yang hilang:")
             print(df.isnull().sum().sum(), "nilai yang hilang")
-
             print("\nInformasi kolom:")
             print(df.dtypes)
 
-            # Cek apakah kolom yang dibutuhkan ada
             if date_col not in df.columns or target_col not in df.columns:
                 raise ValueError(f"Kolom '{date_col}' atau '{target_col}' tidak ditemukan dalam dataset.")
 
-            # Konversi kolom tanggal
-            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')  # coerce untuk nilai yang tidak valid menjadi NaT
+            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
             if df[date_col].isnull().any():
                 print("Warning: Beberapa nilai dalam kolom tanggal tidak valid dan telah diubah menjadi NaT.")
 
             df = df.sort_values(by=date_col)
 
-            # Agregasi data sesuai frekuensi
             print("\nMembuat agregasi data...")
             freq_label = {'D': 'harian', 'W': 'mingguan', 'ME': 'bulanan'}
             if freq.upper() == 'ME':
                 df_agg = df.groupby(pd.Grouper(key=date_col, freq='ME')).agg({target_col: 'sum'}).reset_index()
-            elif  freq.upper() == 'W' :
+            elif freq.upper() == 'W':
                 df_agg = df.groupby(pd.Grouper(key=date_col, freq='W')).agg({target_col: 'sum'}).reset_index()
-            elif  freq.upper() == 'D' :
+            elif freq.upper() == 'D':
                 df_agg = df.groupby(pd.Grouper(key=date_col, freq='D')).agg({target_col: 'sum'}).reset_index()
 
             df_agg.rename(columns={date_col: 'date', target_col: 'sales'}, inplace=True)
-
             print(f"\n============ ANALISIS SKALA {freq_label.get(freq.upper(), freq)} ============")
 
         except ValueError as ve:
@@ -252,25 +250,54 @@ def predict():
         try:
             # Hapus outlier
             df_clean = remove_outliers(df_agg)
-
             print("\nDeskripsi Data (dalam jutaan):")
             print(to_millions(df_clean['sales']).describe())
 
-            # Tambahkan fitur
+            # ======== NEW: Check stationarity and apply differencing if needed ========
+            print("\nMenguji stasioneritas data...")
+            is_stationary = check_stationarity(df_clean['sales'], title=f"Frekuensi: {freq_label.get(freq.upper(), freq)}")
+
+            diff_order = 0
+            sales_series = df_clean['sales'].copy()
+
+            if not is_stationary:
+                print("Data tidak stasioner, melakukan differencing orde pertama...")
+                diff_order = 1
+                sales_series = sales_series.diff().dropna()
+                is_stationary = check_stationarity(sales_series.values, title=f"Frekuensi: {freq_label.get(freq.upper(), freq)} (Diff 1)")
+
+                if not is_stationary:
+                    print("Data masih tidak stasioner, melakukan differencing orde kedua...")
+                    diff_order = 2
+                    sales_series = sales_series.diff().dropna()
+                    is_stationary = check_stationarity(sales_series.values, title=f"Frekuensi: {freq_label.get(freq.upper(), freq)} (Diff 2)")
+
+                    if not is_stationary:
+                        print("Data tetap tidak stasioner setelah dua kali differencing. Menggunakan data asli.")
+                        sales_series = df_clean['sales']
+                        diff_order = 0
+            else:
+                print("Data sudah stasioner, tidak perlu differencing.")
+
+            print(f"Orde differencing yang digunakan: {diff_order}")
+
+            # Karena differencing menghilangkan baris awal, sesuaikan indeks dataframe
+            df_clean = df_clean.iloc[-len(sales_series):].copy()
+            df_clean['sales'] = sales_series.values  # ganti kolom 'sales' dengan hasil differencing
+
+            # Tambahkan fitur setelah data stasioner
             df_features = add_features(df_clean)
             df_features = add_lag_features(df_features)
 
-            # Tes stasioneritas
-            check_stationarity(df_clean['sales'], title=f"Frekuensi: {freq_label.get(freq.upper(), freq)}")
-
-            return df_features  # bisa digunakan untuk pelatihan model selanjutnya
+            return df_features  # untuk pelatihan model selanjutnya
 
         except Exception as e:
             print(f"Terjadi kesalahan dalam analisis data atau fitur: {e}")
             return None
+
         
 
-    df_result =preprocess_and_analyze_sales(
+    df_result = preprocess_and_analyze_sales(
         csv_data,
         date_col='transaction_date',
         target_col='total',
@@ -278,139 +305,149 @@ def predict():
     )
 
     if freq_data.upper()=='D':
-            xgb_model = joblib.load('predicto-api/app/model_ml/xgboost_daily_model.pkl')
-            feature_cols = [col for col in df_result if col not in ['date', 'sales']]
+            try:
+                xgb_model = joblib.load(model_path_daily)
+                feature_cols = [col for col in df_result if col not in ['date', 'sales']]
 
-            # Initialize the future predictions list
-            future_pred_xgb = []
+                # Initialize the future predictions list
+                future_pred_xgb = []
 
-            # Forecast future values
-            future_steps = 30
+                # Forecast future values
+                future_steps = 30
 
-            # Generate future dates
-            last_date = df_result['date'].iloc[-1]
-            future_dates = [last_date + timedelta(days=i+1) for i in range(future_steps)]
-            last_known_values = df_result.iloc[-30:].copy()  # Get last month of data
+                # Generate future dates
+                last_date = df_result['date'].iloc[-1]
+                future_dates = [last_date + timedelta(days=i+1) for i in range(future_steps)]
+                last_known_values = df_result.iloc[-30:].copy()  # Get last month of data
 
-            # Create a dataframe for future dates
-            conf_level = 0.90
-            margin = (1 - conf_level) / 2
-            future_dates_df = pd.DataFrame({'date': future_dates})
-            future_df = add_features(future_dates_df)  # Add date features
+                # Create a dataframe for future dates
+                conf_level = 0.90
+                margin = (1 - conf_level) / 2
+                future_dates_df = pd.DataFrame({'date': future_dates})
+                future_df = add_features(future_dates_df)  # Add date features
 
-            # Initialize with known values
-            future_df_with_values = future_df.copy()
+                # Initialize with known values
+                future_df_with_values = future_df.copy()
 
-            # Assuming xgb_model is your trained XGBoost model and feature_cols is your list of features
-            for i in range(future_steps):
-                # Get the latest available data (either original or predicted)
-                if i == 0:
-                    latest_data = last_known_values.iloc[-30:].copy()  # Start with the last 30 days of data
-                else:
-                    # Update with new predictions
-                    latest_data = pd.concat([
-                        latest_data.iloc[1:],  # Remove the oldest day (shift)
-                        future_rows.iloc[i-1:i][['sales']]  # Add the newest prediction
-                    ])
-
-                # Create row for next date with date features
-                next_row = future_df.iloc[i:i+1].copy()
-
-                # Add lag features based on available data
-                for lag in [1, 2, 3, 7, 14, 21, 28, 30]:
-                    if lag <= i:
-                        # Use predicted values
-                        lag_idx = i - lag
-                        next_row[f'lag_{lag}'] = future_pred_xgb[lag_idx]
+                # Assuming xgb_model is your trained XGBoost model and feature_cols is your list of features
+                for i in range(future_steps):
+                    # Get the latest available data (either original or predicted)
+                    if i == 0:
+                        latest_data = last_known_values.iloc[-30:].copy()  # Start with the last 30 days of data
                     else:
-                        # Use known values from historical data
-                        lag_idx = -(lag - i)
-                        if abs(lag_idx) <= len(latest_data):
-                            next_row[f'lag_{lag}'] = latest_data['sales'].iloc[lag_idx]
+                        # Update with new predictions
+                        latest_data = pd.concat([
+                            latest_data.iloc[1:],  # Remove the oldest day (shift)
+                            future_rows.iloc[i-1:i][['sales']]  # Add the newest prediction
+                        ])
+
+                    # Create row for next date with date features
+                    next_row = future_df.iloc[i:i+1].copy()
+
+                    # Add lag features based on available data
+                    for lag in [1, 2, 3, 7, 14, 21, 28, 30]:
+                        if lag <= i:
+                            # Use predicted values
+                            lag_idx = i - lag
+                            next_row[f'lag_{lag}'] = future_pred_xgb[lag_idx]
                         else:
-                            next_row[f'lag_{lag}'] = latest_data['sales'].iloc[0]
+                            # Use known values from historical data
+                            lag_idx = -(lag - i)
+                            if abs(lag_idx) <= len(latest_data):
+                                next_row[f'lag_{lag}'] = latest_data['sales'].iloc[lag_idx]
+                            else:
+                                next_row[f'lag_{lag}'] = latest_data['sales'].iloc[0]
 
-                # Add rolling statistics
-                for window in [7, 14, 30]:
-                    if i >= window - 1:
-                        # We have enough predictions to calculate rolling window
-                        window_data = future_pred_xgb[max(0, i-window+1):i] + [latest_data['sales'].iloc[-1]]
-                        next_row[f'rolling_mean_{window}'] = np.mean(window_data)
-                        next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
+                    # Add rolling statistics
+                    for window in [7, 14, 30]:
+                        if i >= window - 1:
+                            # We have enough predictions to calculate rolling window
+                            window_data = future_pred_xgb[max(0, i-window+1):i] + [latest_data['sales'].iloc[-1]]
+                            next_row[f'rolling_mean_{window}'] = np.mean(window_data)
+                            next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
+                        else:
+                            # Not enough predictions, use available data
+                            available_preds = future_pred_xgb[:i] if i > 0 else []
+                            needed_hist = window - len(available_preds)
+                            hist_data = latest_data['sales'].iloc[-needed_hist:].values if needed_hist > 0 else []
+                            window_data = np.concatenate([hist_data, available_preds])
+                            next_row[f'rolling_mean_{window}'] = np.mean(window_data)
+                            next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
+
+                    # Add expanding stats (simplified)
+                    next_row['expanding_mean'] = np.mean(latest_data['sales'])
+                    next_row['expanding_std'] = np.std(latest_data['sales'])
+
+                    # Add percentage change features
+                    if i == 0:
+                        next_row['pct_change_1'] = latest_data['sales'].pct_change(periods=1).iloc[-1]
+                        next_row['pct_change_7'] = latest_data['sales'].pct_change(periods=7).iloc[-1]
+                        next_row['pct_change_28'] = latest_data['sales'].pct_change(periods=28).iloc[-1]
                     else:
-                        # Not enough predictions, use available data
-                        available_preds = future_pred_xgb[:i] if i > 0 else []
-                        needed_hist = window - len(available_preds)
-                        hist_data = latest_data['sales'].iloc[-needed_hist:].values if needed_hist > 0 else []
-                        window_data = np.concatenate([hist_data, available_preds])
-                        next_row[f'rolling_mean_{window}'] = np.mean(window_data)
-                        next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
+                        prev_value = future_pred_xgb[i-1]
+                        next_row['pct_change_1'] = (prev_value / latest_data['sales'].iloc[-1]) - 1 if latest_data['sales'].iloc[-1] != 0 else 0
 
-                # Add expanding stats (simplified)
-                next_row['expanding_mean'] = np.mean(latest_data['sales'])
-                next_row['expanding_std'] = np.std(latest_data['sales'])
+                        if i >= 7:
+                            prev7_value = future_pred_xgb[i-7]
+                            next_row['pct_change_7'] = (prev_value / prev7_value) - 1 if prev7_value != 0 else 0
+                        else:
+                            next_row['pct_change_7'] = latest_data['pct_change_7'].iloc[-1]
 
-                # Add percentage change features
-                if i == 0:
-                    next_row['pct_change_1'] = latest_data['sales'].pct_change(periods=1).iloc[-1]
-                    next_row['pct_change_7'] = latest_data['sales'].pct_change(periods=7).iloc[-1]
-                    next_row['pct_change_28'] = latest_data['sales'].pct_change(periods=28).iloc[-1]
-                else:
-                    prev_value = future_pred_xgb[i-1]
-                    next_row['pct_change_1'] = (prev_value / latest_data['sales'].iloc[-1]) - 1 if latest_data['sales'].iloc[-1] != 0 else 0
+                        if i >= 28:
+                            prev28_value = future_pred_xgb[i-28]
+                            next_row['pct_change_28'] = (prev_value / prev28_value) - 1 if prev28_value != 0 else 0
+                        else:
+                            next_row['pct_change_28'] = latest_data['pct_change_28'].iloc[-1]
 
-                    if i >= 7:
-                        prev7_value = future_pred_xgb[i-7]
-                        next_row['pct_change_7'] = (prev_value / prev7_value) - 1 if prev7_value != 0 else 0
+                    # Prepare the feature vector for the prediction
+                    X_next = next_row[feature_cols]
+                    
+                    # Predict the next value
+                    pred = xgb_model.predict(X_next.values.reshape(1, -1))[0]
+                    
+                    # Append the prediction to future predictions list
+                    future_pred_xgb.append(pred)
+
+                    # Store the row with prediction for future iterations
+                    next_row['sales'] = pred
+                    if i == 0:
+                        future_rows = next_row
                     else:
-                        next_row['pct_change_7'] = latest_data['pct_change_7'].iloc[-1]
+                        future_rows = pd.concat([future_rows, next_row])
 
-                    if i >= 28:
-                        prev28_value = future_pred_xgb[i-28]
-                        next_row['pct_change_28'] = (prev_value / prev28_value) - 1 if prev28_value != 0 else 0
-                    else:
-                        next_row['pct_change_28'] = latest_data['pct_change_28'].iloc[-1]
+                # The future predictions are now stored in `future_pred_xgb` and `future_rows`
 
-                # Prepare the feature vector for the prediction
-                X_next = next_row[feature_cols]
-                
-                # Predict the next value
-                pred = xgb_model.predict(X_next.values.reshape(1, -1))[0]
-                
-                # Append the prediction to future predictions list
-                future_pred_xgb.append(pred)
+                # Create prediction intervals (90%)
+                lower_bound_xgb = [pred * (1 - margin) for pred in future_pred_xgb]
+                upper_bound_xgb = [pred * (1 + margin) for pred in future_pred_xgb]
 
-                # Store the row with prediction for future iterations
-                next_row['sales'] = pred
-                if i == 0:
-                    future_rows = next_row
-                else:
-                    future_rows = pd.concat([future_rows, next_row])
+                # XGBoost predictions in desired format
+                xgb_results = pd.DataFrame({
+                    'Tanggal': [date.strftime('%Y-%m-%d') for date in future_dates],
+                    'Prediksi Penjualan (Rp)': [int(round(pred)) for pred in future_pred_xgb],
+                    'Lower Bound (Rp)': [int(round(lb)) for lb in lower_bound_xgb],
+                    'Upper Bound (Rp)': [int(round(ub)) for ub in upper_bound_xgb]
+                })
 
-            # The future predictions are now stored in `future_pred_xgb` and `future_rows`
+                print("\nPrediksi XGBoost 7 Hari Ke Depan:")
+                print(xgb_results.head(7))
 
-            # Create prediction intervals (90%)
-            lower_bound_xgb = [pred * (1 - margin) for pred in future_pred_xgb]
-            upper_bound_xgb = [pred * (1 + margin) for pred in future_pred_xgb]
+                result_json=xgb_results.to_dict(orient='records')
 
-            # XGBoost predictions in desired format
-            xgb_results = pd.DataFrame({
-                'Tanggal': [date.strftime('%Y-%m-%d') for date in future_dates],
-                'Prediksi Penjualan (Rp)': [int(round(pred)) for pred in future_pred_xgb],
-                'Lower Bound (Rp)': [int(round(lb)) for lb in lower_bound_xgb],
-                'Upper Bound (Rp)': [int(round(ub)) for ub in upper_bound_xgb]
-            })
+                return jsonify({
+                    "message": "✅ Prediksi berhasil",
+                    "data": result_json
+                }), 200
+            
+            except Exception as e:
 
-            print("\nPrediksi XGBoost 7 Hari Ke Depan:")
-            print(xgb_results.head(7))
+                traceback.print_exc()
+        
 
-            result_json=xgb_results.to_dict(orient='records')
-
-            return jsonify({
-                "message": "✅ Prediksi berhasil",
-                "data": result_json
-            }), 200
-
+                return jsonify({
+                "message": "❌ Terjadi kesalahan saat melakukan prediksi",
+                "error": str(e)
+                }), 500
             
     
             

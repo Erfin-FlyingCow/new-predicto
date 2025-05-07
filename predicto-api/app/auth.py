@@ -113,12 +113,19 @@ def forgot_password():
     db.session.commit()
 
     # Kirim email ke user
-    reset_link = f"http://localhost:5000/reset-password/{reset_token}"
+    reset_link = f"{request.host_url}reset-password/{reset_token}"
     msg = Message(
         subject="Reset Password",
         sender="youremail@gmail.com",
         recipients=[email],
-        body=f"Click here to reset your password: {reset_link}"
+         html=f"""
+    <p>Click the button below to reset your password:</p>
+    <a href="{reset_link}" 
+       style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#ffffff;text-decoration:none;border-radius:5px;">
+       Reset Password
+    </a>
+    <p>If you didn’t request this, please ignore this email.</p>
+    """
     )
     mail.send(msg)
 

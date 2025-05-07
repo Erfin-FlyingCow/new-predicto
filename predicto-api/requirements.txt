@@ -26,4 +26,4 @@ datetime
 xgboost==2.1.4
 holidays
 scikit-learn
-joblib
+joblib==1.4.2
