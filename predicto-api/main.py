@@ -1,7 +1,9 @@
 import os
 import requests
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from app import create_app, db
+from flask_jwt_extended import JWTManager
+from app.models import TokenBlacklist
 
 # Membuat instance aplikasi
 app = create_app()
@@ -19,6 +21,20 @@ base_url = "http://127.0.0.1:5000"
 # Membuat tabel dalam konteks aplikasi
 with app.app_context():
     db.create_all()
+
+
+jwt = JWTManager(app)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    # Cek apakah token ini masuk blacklist
+    return db.session.query(TokenBlacklist.id).filter_by(jti=jti).first() is not None
+
+# Optional, agar pesan error saat akses dengan token blacklist jelas
+@jwt.revoked_token_loader
+def revoked_token_callback(jwt_header, jwt_payload):
+    return jsonify({"message": "Token has been revoked"}), 401
 
 # ROUTES
 @app.route('/')

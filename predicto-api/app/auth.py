@@ -8,6 +8,8 @@ from flask_mail import Message
 from app import mail 
 import re 
 import uuid
+from flask_jwt_extended import get_jwt, get_jwt_identity
+from app.models import TokenBlacklist
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -169,4 +171,12 @@ def reset_password(token):
     return jsonify({"message": "Password has been successfully reset"}), 200
 
 
+
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()['jti']  # Unique ID dari JWT token
+    db.session.add(TokenBlacklist(jti=jti))
+    db.session.commit()
+    return jsonify({"message": "Logout successful"}), 200
 

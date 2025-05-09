@@ -1,25 +1,24 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import traceback
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from datetime import datetime, timedelta
-import holidays
-from xgboost import XGBRegressor
-import joblib 
+import datetime
+import tensorflow as tf
 import os
+import pickle
 from statsmodels.tsa.seasonal import STL
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras._tf_keras.keras.models import load_model
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model_path_daily = os.path.join(BASE_DIR, 'model_ml', 'xgboost_daily_model.pkl')
-model_path_weakly = os.path.join(BASE_DIR, 'model_ml', 'model_stt_attlstm_weekly.keras')
+historical_data_path=os.path.join(BASE_DIR,'ml_data','customer_segmentation_result .csv')
+daily_model=os.path.join(BASE_DIR,'ml_data','model_xgb_daily.pkl')
+weekly_model=os.path.join(BASE_DIR,'ml_data','stl_attlstm_model_weekly(0.94).h5')
+monthly_model=os.path.join(BASE_DIR,'ml_data','bilstm_monthly_model.h5')
 
 ml_bp = Blueprint('ml', __name__)
 
@@ -27,541 +26,796 @@ ml_bp = Blueprint('ml', __name__)
 @jwt_required()
 
 def predict():
-    if 'file' not in request.files:
-        return jsonify({"message": "CSV file is required"}), 400
-    if 'frequency' not in request.form:
-        return jsonify({"message": "Frequency is required"}), 400
-    
-    csv_data = request.files['file']
-    freq_data = request.form['frequency']
 
-     # Validasi frekuensi
-    if freq_data not in ['D', 'W', 'ME','d','w','me']:
-        return jsonify({"message": "Invalid frequency, choose 'D', 'W', or 'ME'"}), 400
+    data = request.get_json()
 
-    
+    valid_frequencies = {'d', 'D', 'w', 'W', 'ME', 'me'}
 
-    def to_millions(x):
-    # Handle different types of input
-        if isinstance(x, list):
-            return np.array(x) / 1000000
-        else:
-            return x / 1000000
-    
+    frequency = data.get('frequency')
+    if not frequency or frequency not in valid_frequencies:
+        return jsonify({"error": "Valid frequency is required! (d, D, w, W, ME, me)"}), 400
+
+        
+    # Dictionary to store loaded ML models
+    ml_models = {
+        'daily': None,
+        'weekly': None,
+        'monthly': None
+    }
+
+    model_info = {
+        'daily': {
+            'file': 'predicto-api/app/ml_data/model_xgb_daily.pkl', 
+            'format': 'pkl',
+            'description': 'XGBoost dengan fitur lag dan rolling statistics',
+            'features': ['year', 'month', 'day', 'dayofweek', 'quarter', 'is_month_start', 'is_month_end', 
+                    'is_quarter_start', 'is_quarter_end', 'is_year_start', 'is_year_end', 'dayofyear', 
+                    'weekofyear', 'is_weekend', 'is_holiday', 'year_sin', 'year_cos', 'month_sin', 
+                    'month_cos', 'week_sin', 'week_cos', 'lag_1', 'lag_2', 'lag_3', 'lag_7', 'lag_14', 
+                    'lag_21', 'lag_28', 'lag_30', 'rolling_mean_7', 'rolling_std_7', 'rolling_mean_14', 
+                    'rolling_std_14', 'rolling_mean_30', 'rolling_std_30', 'expanding_mean', 
+                    'expanding_std', 'pct_change_1', 'pct_change_7', 'pct_change_28']
+        },
+        'weekly': {
+            'file': weekly_model,
+            'format': 'h5',
+            'description': 'STT-ATTLSTM Hybrid dengan dekomposisi STL',
+            'window_size': 16,
+            'stl_period': 52
+        },
+        'monthly': {
+            'file': monthly_model,
+            'format': 'h5',
+            'description': 'Bidirectional LSTM dengan normalisasi dan sequence prediction',
+            'window_size': 12,
+            'stl_period': 12
+        }
+    }
+
+    # Data used for scaling and STL decomposition
+
+    # Data used for scaling and STL decomposition
+    historical_data = {
+        'daily': None,
+        'weekly': None,
+        'monthly': None
+    }
 
 
-    def check_stationarity(time_series, title='', signif=0.05):
-        # Ensure time_series is appropriate length
-        if len(time_series) < 10:
-            print(f"Warning: Time series for {title} is too short for reliable stationarity testing.")
+    # Store scalers for each model type
+    scalers = {
+        'daily': None,
+        'weekly': {
+            'resid': StandardScaler(),
+            'other': MinMaxScaler()
+        },
+        'monthly': MinMaxScaler()
+    }
+
+    # Helper function to create date features - Updated to match model's expected feature names
+    def add_date_features(df, date_col='date'):
+        df = df.copy()
+        
+        # Using feature names required by the model
+        df['year'] = df[date_col].dt.year
+        df['month'] = df[date_col].dt.month
+        df['day'] = df[date_col].dt.day
+        df['dayofweek'] = df[date_col].dt.dayofweek
+        df['quarter'] = df[date_col].dt.quarter
+        df['is_month_start'] = df[date_col].dt.is_month_start.astype(int)
+        df['is_month_end'] = df[date_col].dt.is_month_end.astype(int)
+        df['is_quarter_start'] = df[date_col].dt.is_quarter_start.astype(int)
+        df['is_quarter_end'] = df[date_col].dt.is_quarter_end.astype(int)
+        df['is_year_start'] = df[date_col].dt.is_year_start.astype(int)
+        df['is_year_end'] = df[date_col].dt.is_year_end.astype(int)
+        df['dayofyear'] = df[date_col].dt.dayofyear
+        df['weekofyear'] = df[date_col].dt.isocalendar().week.astype(int)
+        df['is_weekend'] = df['dayofweek'].isin([5, 6]).astype(int)
+
+        # Simple holiday detection
+        df['is_holiday'] = ((df['month'] == 1) & (df['day'] == 1)).astype(int)
+
+        # Cyclical features
+        df['year_sin'] = np.sin(2 * np.pi * df['year'] / 2030)
+        df['year_cos'] = np.cos(2 * np.pi * df['year'] / 2030)
+        df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
+        df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+        df['week_sin'] = np.sin(2 * np.pi * df['weekofyear'] / 52)
+        df['week_cos'] = np.cos(2 * np.pi * df['weekofyear'] / 52)
+
+        return df
+
+
+    # Load historical data
+    def load_historical_data():
+        try:
+            df = pd.read_csv(historical_data_path)
+            df['transaction_date'] = pd.to_datetime(df['transaction_date'])
+            df = df.sort_values('transaction_date')
+
+            # Agregasi harian
+            daily_df = df.groupby(pd.Grouper(key='transaction_date', freq='D'))['total'].sum().reset_index()
+            daily_df.rename(columns={'transaction_date': 'date', 'total': 'sales'}, inplace=True)
+            daily_df = add_date_features(daily_df)
+
+            # Agregasi mingguan dan bulanan
+            weekly_df = daily_df.resample('W-MON', on='date').sum().reset_index()
+            monthly_df = daily_df.resample('ME', on='date').sum().reset_index()
+
+            # Simpan ke struktur chatbot
+            historical_data['daily'] = daily_df
+            historical_data['weekly'] = weekly_df
+            historical_data['monthly'] = monthly_df
+
+            print("✅ Data historis dari customer_segmentation_result.csv berhasil dimuat.")
+            return True
+
+        except Exception as e:
+            print(f"❌ Gagal memuat data historis: {e}")
             return False
 
-        # Augmented Dickey-Fuller test
-        result_adf = adfuller(time_series, autolag='AIC')
-        adf_stat, adf_pvalue = result_adf[0], result_adf[1]
 
-        # KPSS test
-        result_kpss = kpss(time_series, regression='c', nlags="auto")
-        kpss_stat, kpss_pvalue = result_kpss[0], result_kpss[1]
-
-        # Create plot
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
-
-        # Plot time series
-        ax1.plot(time_series)
-        ax1.set_title(f'Time Series {title}')
-        ax1.set_xlabel('Index')
-        ax1.set_ylabel('Value')
-
-        # Calculate appropriate number of lags (not exceeding 50% of data length as required by statsmodels)
-        max_lags = min(40, int(len(time_series) * 0.4))
-        if max_lags < 1:
-            max_lags = 1
-
-        print(f"Using {max_lags} lags for ACF/PACF calculation (data length: {len(time_series)})")
-
-        # Plot ACF with appropriate lags
-        plot_acf(time_series, ax=ax2, lags=max_lags)
-        ax2.set_title('Autocorrelation Function')
-
-        # Plot PACF with appropriate lags
-        plot_pacf(time_series, ax=ax3, lags=max_lags)
-        ax3.set_title('Partial Autocorrelation Function')
-
-        # Print results
-        print(f"\nStationarity Test Results for {title}:")
-        print(f"ADF Statistic: {adf_stat:.4f}, p-value: {adf_pvalue:.4f}")
-        print(f"KPSS Statistic: {kpss_stat:.4f}, p-value: {kpss_pvalue:.4f}")
-
-        # Interpretation
-        is_stationary = (adf_pvalue < signif) and (kpss_pvalue >= signif)
-        print(f"Series is {'stationary' if is_stationary else 'non-stationary'}")
-        print(f"ADF Test: {'Rejects' if adf_pvalue < signif else 'Does not reject'} null hypothesis of non-stationarity")
-        print(f"KPSS Test: {'Rejects' if kpss_pvalue < signif else 'Does not reject'} null hypothesis of stationarity")
-
-        return is_stationary
-
-    def add_features(df):
-        df_feat = df.copy()
-
-        # Date components
-        df_feat['year'] = df_feat['date'].dt.year
-        df_feat['month'] = df_feat['date'].dt.month
-        df_feat['day'] = df_feat['date'].dt.day
-        df_feat['dayofweek'] = df_feat['date'].dt.dayofweek
-        df_feat['quarter'] = df_feat['date'].dt.quarter
-        df_feat['is_month_start'] = df_feat['date'].dt.is_month_start.astype(int)
-        df_feat['is_month_end'] = df_feat['date'].dt.is_month_end.astype(int)
-        df_feat['is_quarter_start'] = df_feat['date'].dt.is_quarter_start.astype(int)
-        df_feat['is_quarter_end'] = df_feat['date'].dt.is_quarter_end.astype(int)
-        df_feat['is_year_start'] = df_feat['date'].dt.is_year_start.astype(int)
-        df_feat['is_year_end'] = df_feat['date'].dt.is_year_end.astype(int)
-
-        # Day of the year and week of the year
-        df_feat['dayofyear'] = df_feat['date'].dt.dayofyear
-        df_feat['weekofyear'] = df_feat['date'].dt.isocalendar().week
-
-        # Weekend indicator
-        df_feat['is_weekend'] = df_feat['dayofweek'].isin([5, 6]).astype(int)
-
-        # Holidays (Indonesian holidays)
-        indo_holidays = holidays.Indonesia()
-        df_feat['is_holiday'] = df_feat['date'].apply(lambda x: x in indo_holidays).astype(int)
-
-        # Create seasonal features using sine and cosine transforms
-        # These capture cyclical patterns better than categorical variables
-
-        # Yearly seasonality
-        days_in_year = 365.25
-        df_feat['year_sin'] = np.sin(2 * np.pi * df_feat['dayofyear'] / days_in_year)
-        df_feat['year_cos'] = np.cos(2 * np.pi * df_feat['dayofyear'] / days_in_year)
-
-        # Monthly seasonality
-        days_in_month = 30.44
-        df_feat['month_sin'] = np.sin(2 * np.pi * df_feat['day'] / days_in_month)
-        df_feat['month_cos'] = np.cos(2 * np.pi * df_feat['day'] / days_in_month)
-
-        # Weekly seasonality
-        days_in_week = 7
-        df_feat['week_sin'] = np.sin(2 * np.pi * df_feat['dayofweek'] / days_in_week)
-        df_feat['week_cos'] = np.cos(2 * np.pi * df_feat['dayofweek'] / days_in_week)
-
-        return df_feat
-
-    def remove_outliers(df, column='sales', lower_quantile=0.05, upper_quantile=0.95, iqr_multiplier=1.5):
-
-        Q1 = df[column].quantile(lower_quantile)
-        Q3 = df[column].quantile(upper_quantile)
-        IQR = Q3 - Q1
-
-        lower_bound = Q1 - iqr_multiplier * IQR
-        upper_bound = Q3 + iqr_multiplier * IQR
-
-        print(f"Removing outliers from {column}:")
-        print(f"Lower bound: {to_millions(lower_bound):.2f} million")
-        print(f"Upper bound: {to_millions(upper_bound):.2f} million")
-        print(f"Original shape: {df.shape[0]}")
-
-        df_clean = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
-
-        print(f"Shape after removing outliers: {df_clean.shape[0]}")
-        print(f"Removed {df.shape[0] - df_clean.shape[0]} rows ({(df.shape[0] - df_clean.shape[0])/df.shape[0]*100:.2f}%)")
-
-        return df_clean
-
-    def add_lag_features(df, target_col='sales', lags=[1, 2, 3, 7, 14, 21, 28, 30]):
-
-        df_lag = df.copy()
-
-        # Add lag features
+    def add_lag_features(df, lags=[1, 2, 3, 7, 14, 21, 28, 30]):
+        df = df.copy()
         for lag in lags:
-            df_lag[f'lag_{lag}'] = df_lag[target_col].shift(lag)
-
-        # Add rolling mean/std features
+            df[f'lag_{lag}'] = df['sales'].shift(lag)
+        
+        # Add rolling statistics
         for window in [7, 14, 30]:
-            df_lag[f'rolling_mean_{window}'] = df_lag[target_col].rolling(window=window).mean()
-            df_lag[f'rolling_std_{window}'] = df_lag[target_col].rolling(window=window).std()
+            df[f'rolling_mean_{window}'] = df['sales'].rolling(window=window).mean()
+            df[f'rolling_std_{window}'] = df['sales'].rolling(window=window).std()
+        
+        # Add expanding stats
+        df['expanding_mean'] = df['sales'].expanding().mean()
+        df['expanding_std'] = df['sales'].expanding().std()
+        
+        # Add percentage changes
+        df['pct_change_1'] = df['sales'].pct_change(periods=1)
+        df['pct_change_7'] = df['sales'].pct_change(periods=7)
+        df['pct_change_28'] = df['sales'].pct_change(periods=28)
+        
+        return df
 
-        # Add expanding mean/std features
-        df_lag['expanding_mean'] = df_lag[target_col].expanding().mean()
-        df_lag['expanding_std'] = df_lag[target_col].expanding().std()
+    # Function to create sequences for LSTM models
+    def create_sequences(data, window_size):
+        X, y = [], []
+        for i in range(len(data) - window_size):
+            X.append(data[i:i+window_size])
+            y.append(data[i+window_size])
+        return np.array(X), np.array(y)
 
-        # Add growth rate features (percent change)
-        df_lag['pct_change_1'] = df_lag[target_col].pct_change(periods=1)
-        df_lag['pct_change_7'] = df_lag[target_col].pct_change(periods=7)
-        df_lag['pct_change_28'] = df_lag[target_col].pct_change(periods=28)
+    # Function to create dual sequences for STT-ATTLSTM model
+    def create_dual_sequences(resid, other, window_size):
+        X_resid, X_other, y = [], [], []
+        for i in range(len(resid) - window_size):
+            X_resid.append(resid[i:i+window_size])
+            X_other.append(other[i:i+window_size])
+            y.append(resid[i+window_size])
+        return np.expand_dims(np.array(X_resid), 2), np.array(X_other), np.array(y)
 
-        # Drop rows with NaN values from lag features
-        # Instead of dropping, we could also impute them
-        df_lag = df_lag.dropna()
-
-        return df_lag
-    
-    def preprocess_and_analyze_sales(
-        csv_data,
-        date_col='transaction_date',
-        target_col='total',
-        freq=freq_data
-    ):
-        try:
-            print("Memuat dataset...")
-            df = pd.read_csv(csv_data)
-
-        except FileNotFoundError:
-            print(f"Error: File '{csv_data}' tidak ditemukan.")
-            return None
-
-        except Exception as e:
-            print(f"Terjadi kesalahan saat memuat file: {e}")
-            return None
-
-        try:
-            print("Memproses data...")
-            print(f"Dataset mentah memiliki {df.shape[0]} baris dan {df.shape[1]} kolom")
-            print("Mengecek data yang hilang:")
-            print(df.isnull().sum().sum(), "nilai yang hilang")
-            print("\nInformasi kolom:")
-            print(df.dtypes)
-
-            if date_col not in df.columns or target_col not in df.columns:
-                raise ValueError(f"Kolom '{date_col}' atau '{target_col}' tidak ditemukan dalam dataset.")
-
-            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-            if df[date_col].isnull().any():
-                print("Warning: Beberapa nilai dalam kolom tanggal tidak valid dan telah diubah menjadi NaT.")
-
-            df = df.sort_values(by=date_col)
-
-            print("\nMembuat agregasi data...")
-            freq_label = {'D': 'harian', 'W': 'mingguan', 'ME': 'bulanan'}
-            if freq.upper() == 'ME':
-                df_agg = df.groupby(pd.Grouper(key=date_col, freq='ME')).agg({target_col: 'sum'}).reset_index()
-            elif freq.upper() == 'W':
-                df_agg = df.groupby(pd.Grouper(key=date_col, freq='W')).agg({target_col: 'sum'}).reset_index()
-            elif freq.upper() == 'D':
-                df_agg = df.groupby(pd.Grouper(key=date_col, freq='D')).agg({target_col: 'sum'}).reset_index()
-
-            df_agg.rename(columns={date_col: 'date', target_col: 'sales'}, inplace=True)
-            print(f"\n============ ANALISIS SKALA {freq_label.get(freq.upper(), freq)} ============")
-
-        except ValueError as ve:
-            print(f"Error: {ve}")
-            return None
-        except Exception as e:
-            print(f"Terjadi kesalahan saat memproses data: {e}")
-            return None
+    # Prepare models and scalers
+    def prepare_models():
+        # First load historical data
+        if not load_historical_data():
+            return False
 
         try:
-            # Hapus outlier
-            df_clean = remove_outliers(df_agg)
-            print("\nDeskripsi Data (dalam jutaan):")
-            print(to_millions(df_clean['sales']).describe())
+            ##### === DAILY MODEL === #####
+            daily_df = historical_data['daily'].copy()
 
-            # ======== NEW: Check stationarity and apply differencing if needed ========
-            print("\nMenguji stasioneritas data...")
-            is_stationary = check_stationarity(df_clean['sales'], title=f"Frekuensi: {freq_label.get(freq.upper(), freq)}")
+            # Tambahkan fitur tanggal terlebih dahulu
+            daily_df = add_date_features(daily_df)
 
-            diff_order = 0
-            sales_series = df_clean['sales'].copy()
+            # Tambahkan fitur lag dan rolling
+            daily_df_with_lags = add_lag_features(daily_df)
+            daily_df_with_lags = daily_df_with_lags.dropna()
 
-            if not is_stationary:
-                print("Data tidak stasioner, melakukan differencing orde pertama...")
-                diff_order = 1
-                sales_series = sales_series.diff().dropna()
-                is_stationary = check_stationarity(sales_series.values, title=f"Frekuensi: {freq_label.get(freq.upper(), freq)} (Diff 1)")
+            # Validasi semua fitur tersedia
+            feature_cols = model_info['daily']['features']
+            missing_cols = [col for col in feature_cols if col not in daily_df_with_lags.columns]
+            if missing_cols:
+                raise ValueError(f"Missing columns in daily data: {missing_cols}")
 
-                if not is_stationary:
-                    print("Data masih tidak stasioner, melakukan differencing orde kedua...")
-                    diff_order = 2
-                    sales_series = sales_series.diff().dropna()
-                    is_stationary = check_stationarity(sales_series.values, title=f"Frekuensi: {freq_label.get(freq.upper(), freq)} (Diff 2)")
+            # Simpan nilai terakhir untuk prediksi
+            latest_values = daily_df_with_lags.iloc[-1:][feature_cols]
 
-                    if not is_stationary:
-                        print("Data tetap tidak stasioner setelah dua kali differencing. Menggunakan data asli.")
-                        sales_series = df_clean['sales']
-                        diff_order = 0
+            # Load model harian
+            daily_model_path = model_info['daily']['file']
+            if os.path.exists(daily_model_path):
+                with open(daily_model_path, 'rb') as file:
+                    ml_models['daily'] = pickle.load(file)
+                print(f"✅ Loaded daily model from {daily_model_path}")
             else:
-                print("Data sudah stasioner, tidak perlu differencing.")
+                print(f"❌ Daily model file not found: {daily_model_path}")
 
-            print(f"Orde differencing yang digunakan: {diff_order}")
+            ##### === WEEKLY MODEL === #####
+            weekly_df = historical_data['weekly']
+            if weekly_df is not None and os.path.exists(model_info['weekly']['file']):
+                window_size = model_info['weekly']['window_size']
+                stl_period = model_info['weekly']['stl_period']
 
-            # Karena differencing menghilangkan baris awal, sesuaikan indeks dataframe
-            df_clean = df_clean.iloc[-len(sales_series):].copy()
-            df_clean['sales'] = sales_series.values  # ganti kolom 'sales' dengan hasil differencing
-
-            # Tambahkan fitur setelah data stasioner
-            df_features = add_features(df_clean)
-            df_features = add_lag_features(df_features)
-
-            return df_features  # untuk pelatihan model selanjutnya
-
-        except Exception as e:
-            print(f"Terjadi kesalahan dalam analisis data atau fitur: {e}")
-            return None
-
-        
-
-    df_result = preprocess_and_analyze_sales(
-        csv_data,
-        date_col='transaction_date',
-        target_col='total',
-        freq=freq_data
-    )
-
-    if freq_data.upper()=='D':
-            try:
-                xgb_model = joblib.load(model_path_daily)
-                feature_cols = [col for col in df_result if col not in ['date', 'sales']]
-
-                # Initialize the future predictions list
-                future_pred_xgb = []
-
-                # Forecast future values
-                future_steps = 30
-
-                # Generate future dates
-                last_date = df_result['date'].iloc[-1]
-                future_dates = [last_date + timedelta(days=i+1) for i in range(future_steps)]
-                last_known_values = df_result.iloc[-30:].copy()  # Get last month of data
-
-                # Create a dataframe for future dates
-                conf_level = 0.90
-                margin = (1 - conf_level) / 2
-                future_dates_df = pd.DataFrame({'date': future_dates})
-                future_df = add_features(future_dates_df)  # Add date features
-
-                # Initialize with known values
-                future_df_with_values = future_df.copy()
-
-                # Assuming xgb_model is your trained XGBoost model and feature_cols is your list of features
-                for i in range(future_steps):
-                    # Get the latest available data (either original or predicted)
-                    if i == 0:
-                        latest_data = last_known_values.iloc[-30:].copy()  # Start with the last 30 days of data
-                    else:
-                        # Update with new predictions
-                        latest_data = pd.concat([
-                            latest_data.iloc[1:],  # Remove the oldest day (shift)
-                            future_rows.iloc[i-1:i][['sales']]  # Add the newest prediction
-                        ])
-
-                    # Create row for next date with date features
-                    next_row = future_df.iloc[i:i+1].copy()
-
-                    # Add lag features based on available data
-                    for lag in [1, 2, 3, 7, 14, 21, 28, 30]:
-                        if lag <= i:
-                            # Use predicted values
-                            lag_idx = i - lag
-                            next_row[f'lag_{lag}'] = future_pred_xgb[lag_idx]
-                        else:
-                            # Use known values from historical data
-                            lag_idx = -(lag - i)
-                            if abs(lag_idx) <= len(latest_data):
-                                next_row[f'lag_{lag}'] = latest_data['sales'].iloc[lag_idx]
-                            else:
-                                next_row[f'lag_{lag}'] = latest_data['sales'].iloc[0]
-
-                    # Add rolling statistics
-                    for window in [7, 14, 30]:
-                        if i >= window - 1:
-                            # We have enough predictions to calculate rolling window
-                            window_data = future_pred_xgb[max(0, i-window+1):i] + [latest_data['sales'].iloc[-1]]
-                            next_row[f'rolling_mean_{window}'] = np.mean(window_data)
-                            next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
-                        else:
-                            # Not enough predictions, use available data
-                            available_preds = future_pred_xgb[:i] if i > 0 else []
-                            needed_hist = window - len(available_preds)
-                            hist_data = latest_data['sales'].iloc[-needed_hist:].values if needed_hist > 0 else []
-                            window_data = np.concatenate([hist_data, available_preds])
-                            next_row[f'rolling_mean_{window}'] = np.mean(window_data)
-                            next_row[f'rolling_std_{window}'] = np.std(window_data) if len(window_data) > 1 else 0
-
-                    # Add expanding stats (simplified)
-                    next_row['expanding_mean'] = np.mean(latest_data['sales'])
-                    next_row['expanding_std'] = np.std(latest_data['sales'])
-
-                    # Add percentage change features
-                    if i == 0:
-                        next_row['pct_change_1'] = latest_data['sales'].pct_change(periods=1).iloc[-1]
-                        next_row['pct_change_7'] = latest_data['sales'].pct_change(periods=7).iloc[-1]
-                        next_row['pct_change_28'] = latest_data['sales'].pct_change(periods=28).iloc[-1]
-                    else:
-                        prev_value = future_pred_xgb[i-1]
-                        next_row['pct_change_1'] = (prev_value / latest_data['sales'].iloc[-1]) - 1 if latest_data['sales'].iloc[-1] != 0 else 0
-
-                        if i >= 7:
-                            prev7_value = future_pred_xgb[i-7]
-                            next_row['pct_change_7'] = (prev_value / prev7_value) - 1 if prev7_value != 0 else 0
-                        else:
-                            next_row['pct_change_7'] = latest_data['pct_change_7'].iloc[-1]
-
-                        if i >= 28:
-                            prev28_value = future_pred_xgb[i-28]
-                            next_row['pct_change_28'] = (prev_value / prev28_value) - 1 if prev28_value != 0 else 0
-                        else:
-                            next_row['pct_change_28'] = latest_data['pct_change_28'].iloc[-1]
-
-                    # Prepare the feature vector for the prediction
-                    X_next = next_row[feature_cols]
-                    
-                    # Predict the next value
-                    pred = xgb_model.predict(X_next.values.reshape(1, -1))[0]
-                    
-                    # Append the prediction to future predictions list
-                    future_pred_xgb.append(pred)
-
-                    # Store the row with prediction for future iterations
-                    next_row['sales'] = pred
-                    if i == 0:
-                        future_rows = next_row
-                    else:
-                        future_rows = pd.concat([future_rows, next_row])
-
-                # The future predictions are now stored in `future_pred_xgb` and `future_rows`
-
-                # Create prediction intervals (90%)
-                lower_bound_xgb = [pred * (1 - margin) for pred in future_pred_xgb]
-                upper_bound_xgb = [pred * (1 + margin) for pred in future_pred_xgb]
-
-                # XGBoost predictions in desired format
-                xgb_results = pd.DataFrame({
-                    'Tanggal': [date.strftime('%Y-%m-%d') for date in future_dates],
-                    'Prediksi Penjualan (Rp)': [int(round(pred)) for pred in future_pred_xgb],
-                    'Lower Bound (Rp)': [int(round(lb)) for lb in lower_bound_xgb],
-                    'Upper Bound (Rp)': [int(round(ub)) for ub in upper_bound_xgb]
-                })
-
-                print("\nPrediksi XGBoost 7 Hari Ke Depan:")
-                print(xgb_results.head(7))
-
-                result_json=xgb_results.to_dict(orient='records')
-
-                return jsonify({
-                    "message": "✅ Prediksi berhasil",
-                    "data": result_json
-                }), 200
-            
-            except Exception as e:
-
-                traceback.print_exc()
-        
-
-                return jsonify({
-                "message": "❌ Terjadi kesalahan saat melakukan prediksi",
-                "error": str(e)
-                }), 500
-            
-    elif freq_data.upper() == 'W':
-            try:
-                # === 1. Decompose ===
-                stl = STL(df_result['sales'], period=52)
+                stl = STL(weekly_df['sales'], period=stl_period)
                 res = stl.fit()
+
                 resid = res.resid
                 trend = res.trend
                 seasonal = res.seasonal
-                future_steps_weekly = 12
 
-                # === 2. Scaling ===
-                scaler_resid = StandardScaler()
-                scaler_other = MinMaxScaler()
-                resid_scaled = scaler_resid.fit_transform(resid.values.reshape(-1, 1)).flatten()
-                other_scaled = scaler_other.fit_transform(np.vstack([trend, seasonal]).T)
+                resid_scaled = scalers['weekly']['resid'].fit_transform(resid.values.reshape(-1, 1)).flatten()
+                other_scaled = scalers['weekly']['other'].fit_transform(np.vstack([trend, seasonal]).T)
 
-                # === 3. Sequence Building ===
-                def create_dual_sequences(resid, other, window_size):
-                    X_resid, X_other, y = [], [], []
-                    for i in range(len(resid) - window_size):
-                        X_resid.append(resid[i:i+window_size])
-                        X_other.append(other[i:i+window_size])
-                        y.append(resid[i+window_size])
-                    return np.expand_dims(np.array(X_resid), 2), np.array(X_other), np.array(y)
+                last_resid_seq = resid_scaled[-window_size:].reshape(1, window_size, 1)
+                last_other_seq = other_scaled[-window_size:].reshape(1, window_size, 2)
+                last_resid_input = last_resid_seq[:, -1, 0].reshape(-1, 1)
 
-                window_size = 16
-                X1, X2, y = create_dual_sequences(resid_scaled, other_scaled, window_size)
-                X1_test = X1.astype(np.float32)
-                X2_test = X2.astype(np.float32)
-                resid_input_test = y.astype(np.float32).reshape(-1, 1)
+                historical_data['weekly_stl'] = {
+                    'resid': resid,
+                    'trend': trend,
+                    'seasonal': seasonal,
+                    'last_resid_seq': last_resid_seq,
+                    'last_other_seq': last_other_seq,
+                    'last_resid_input': last_resid_input
+                }
 
-                # === 4. Load Model ===
-                model = load_model(model_path_weakly)
+                ml_models['weekly'] = tf.keras.models.load_model(model_info['weekly']['file'], compile=False)
+                print(f"✅ Loaded weekly model from {model_info['weekly']['file']}")
+            else:
+                print(f"❌ Weekly model file not found or data missing")
 
-                # === 5. Forecasting ===
-                future_resid_preds = []
-                current_X1 = X1_test[-1].copy()
-                current_X2 = X2_test[-1].copy()
-                current_resid = resid_input_test[-1].copy()
+            ##### === MONTHLY MODEL === #####
+            monthly_df = historical_data['monthly']
+            if monthly_df is not None and os.path.exists(model_info['monthly']['file']):
+                window_size = model_info['monthly']['window_size']
+                stl_period = model_info['monthly']['stl_period']
 
-                for i in range(future_steps_weekly):
-                    pred_scaled = model.predict([
-                        np.expand_dims(current_X1, 0),
-                        np.expand_dims(current_X2, 0),
-                        np.expand_dims(current_resid, 0)
-                    ], verbose=0).flatten()[0]
+                stl = STL(monthly_df['sales'], period=stl_period)
+                result = stl.fit()
 
-                    pred_resid = scaler_resid.inverse_transform([[pred_scaled]])[0, 0]
+                trend_monthly = result.trend
+                seasonal_monthly = result.seasonal
+                resid_monthly = result.resid
+
+                resid_scaled_monthly = scalers['monthly'].fit_transform(resid_monthly.values.reshape(-1, 1))
+                last_seq = resid_scaled_monthly[-window_size:].reshape(1, window_size, 1)
+
+                historical_data['monthly_stl'] = {
+                    'trend': trend_monthly,
+                    'seasonal': seasonal_monthly,
+                    'resid': resid_monthly,
+                    'last_seq': last_seq
+                }
+
+                ml_models['monthly'] = tf.keras.models.load_model(model_info['monthly']['file'], custom_objects={'mse': tf.keras.losses.MeanSquaredError()})
+                print(f"✅ Loaded monthly model from {model_info['monthly']['file']}")
+            else:
+                print(f"❌ Monthly model file not found or data missing")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Error preparing models: {e}")
+            traceback.print_exc()
+            return False
+
+
+    # Try to prepare models when starting the application
+    try:
+        prepare_models()
+    except Exception as e:
+        print(f"❌ Could not prepare ML models: {e}")
+        traceback.print_exc()
+
+
+    # Prediction Functions
+    def predict_daily():
+        """Generate daily sales prediction for next 7 days using current date"""
+        try:
+            if ml_models['daily'] is None:
+                print("❌ Error in daily prediction: model belum tersedia")
+                return "Model harian belum tersedia."
+            
+            daily_df = historical_data['daily']
+            model = ml_models['daily']
+            
+            # Get current date instead of last date in data
+            current_date = datetime.datetime.now().date()
+            
+            # Generate prediction dates starting from tomorrow
+            future_dates = [current_date + datetime.timedelta(days=i+1) for i in range(7)]
+            
+            # Initialize prediction results
+            predictions = []
+            lower_bounds = []
+            upper_bounds = []
+            
+            # Create base dataframe with date features
+            future_df = pd.DataFrame({'date': future_dates})
+            future_df['date'] = pd.to_datetime(future_df['date']) 
+            future_df = add_date_features(future_df)
+            
+            # Get latest data with lags - need to adjust this if there's a gap between data and current date
+            latest_data = add_lag_features(daily_df.iloc[-30:].copy())
+            
+            # Iteratively predict next 7 days
+            for i in range(7):
+                # Prepare next row
+                next_row = future_df.iloc[i:i+1].copy()
+                
+                # Add lag features
+                if i == 0:
+                    # First prediction uses known historical data
+                    for lag in [1, 2, 3, 7, 14, 21, 28, 30]:
+                        lag_idx = -lag
+                        next_row[f'lag_{lag}'] = daily_df['sales'].iloc[lag_idx]
+                    
+                    # Add rolling statistics
+                    for window in [7, 14, 30]:
+                        next_row[f'rolling_mean_{window}'] = daily_df['sales'].iloc[-window:].mean()
+                        next_row[f'rolling_std_{window}'] = daily_df['sales'].iloc[-window:].std()
+                    
+                    # Add expanding stats
+                    next_row['expanding_mean'] = daily_df['sales'].mean()
+                    next_row['expanding_std'] = daily_df['sales'].std()
+                    
+                    # Add percentage changes
+                    next_row['pct_change_1'] = daily_df['sales'].iloc[-1] / daily_df['sales'].iloc[-2] - 1
+                    next_row['pct_change_7'] = daily_df['sales'].iloc[-1] / daily_df['sales'].iloc[-8] - 1
+                    next_row['pct_change_28'] = daily_df['sales'].iloc[-1] / daily_df['sales'].iloc[-29] - 1
+                else:
+                    # Subsequent predictions use previous predictions
+                    for lag in [1, 2, 3, 7, 14, 21, 28, 30]:
+                        if lag <= i:
+                            # Use predicted values
+                            next_row[f'lag_{lag}'] = predictions[i-lag]
+                        else:
+                            # Use known values
+                            next_row[f'lag_{lag}'] = daily_df['sales'].iloc[-(lag-i)]
+                    
+                    # Add rolling statistics - mix of predictions and historical
+                    for window in [7, 14, 30]:
+                        if i >= window:
+                            # All predictions
+                            next_row[f'rolling_mean_{window}'] = np.mean(predictions[i-window:i])
+                            next_row[f'rolling_std_{window}'] = np.std(predictions[i-window:i])
+                        else:
+                            # Mix of historical and predictions
+                            hist_needed = window - i
+                            all_vals = list(daily_df['sales'].iloc[-hist_needed:]) + predictions[:i]
+                            next_row[f'rolling_mean_{window}'] = np.mean(all_vals)
+                            next_row[f'rolling_std_{window}'] = np.std(all_vals)
+                    
+                    # Add expanding stats
+                    all_vals = list(daily_df['sales']) + predictions[:i]
+                    next_row['expanding_mean'] = np.mean(all_vals)
+                    next_row['expanding_std'] = np.std(all_vals)
+                    
+                    # Add percentage changes
+                    if i >= 1:
+                        next_row['pct_change_1'] = predictions[i-1] / (predictions[i-2] if i >= 2 else daily_df['sales'].iloc[-1]) - 1
+                    else:
+                        next_row['pct_change_1'] = daily_df['sales'].pct_change().iloc[-1]
+                    
+                    if i >= 7:
+                        next_row['pct_change_7'] = predictions[i-1] / predictions[i-8] - 1
+                    else:
+                        value = predictions[i-1] if i > 0 else daily_df['sales'].iloc[-1]
+                        prev_value = daily_df['sales'].iloc[-(8-i)]
+                        next_row['pct_change_7'] = value / prev_value - 1
+                    
+                    if i >= 28:
+                        next_row['pct_change_28'] = predictions[i-1] / predictions[i-29] - 1
+                    else:
+                        value = predictions[i-1] if i > 0 else daily_df['sales'].iloc[-1]
+                        prev_value = daily_df['sales'].iloc[-(29-i)]
+                        next_row['pct_change_28'] = value / prev_value - 1
+                
+        # Make prediction
+                feature_cols = model_info['daily']['features']
+                X_next = next_row[feature_cols]
+                pred = model.predict(X_next)[0]
+                
+                # Store prediction
+                predictions.append(pred)
+                
+                # Add confidence bounds (±10%)
+                margin = 0.10
+                lower_bounds.append(pred * (1 - margin))
+                upper_bounds.append(pred * (1 + margin))
+            
+            # Format results
+            results = {
+                'date': [d.strftime('%Y-%m-%d') for d in future_dates],
+                'prediction': predictions,
+                'lower_bound': lower_bounds,
+                'upper_bound': upper_bounds
+            }
+            
+            nested_results = []
+
+            for i in range(len(results['date'])):
+                data_point = {
+                    'date': int(results['date'][i]),
+                    'prediction': results['prediction'][i],
+                    'lower_bound': results['lower_bound'][i],
+                    'upper_bound': results['upper_bound'][i]
+                }
+                nested_results.append(data_point)
+            
+            return nested_results
+        
+
+        except Exception as e:
+            print(f"❌ Error in daily prediction: {e}")
+            return "Terjadi kesalahan saat memproses prediksi harian."               
+
+
+    def predict_weekly():
+        """Generate weekly sales prediction for next 4 weeks"""
+        try:
+            if ml_models['weekly'] is None or 'weekly_stl' not in historical_data:
+                print("❌ Error in weekly prediction: model belum tersedia")
+                return "Model mingguan belum tersedia."
+            
+            weekly_df = historical_data['weekly']
+            stl_data = historical_data['weekly_stl']
+            model = ml_models['weekly']
+            
+            # Get STL components
+            resid = stl_data['resid']
+            trend = stl_data['trend']
+            seasonal = stl_data['seasonal']
+
+            current_date = datetime.datetime.now().date()
+            
+            # Extract model input shape from model object
+            input_shape = model.input_shape
+            if isinstance(input_shape, list):
+                # If model expects multiple inputs
+                print(f"Debug - Model expects multiple inputs: {input_shape}")
+                input_shapes = input_shape
+            else:
+                # If model expects a single input
+                print(f"Debug - Model expects single input: {input_shape}")
+                input_shapes = [input_shape]
+            
+            # Check model input structure
+            num_inputs = len(model.inputs)
+            print(f"Debug - Model expects {num_inputs} input(s)")
+            
+            # Get last date
+            last_date = weekly_df['date'].iloc[-1]
+            
+            # Generate prediction dates (weekly, starting from next Monday)
+            future_dates = []
+            for i in range(4):
+                days_until_monday = (7 - current_date.weekday()) % 7
+                if days_until_monday == 0:
+                    days_until_monday = 7  # If today is Monday, go to next Monday
+                
+                next_date = current_date + datetime.timedelta(days=days_until_monday + (7 * i))
+                future_dates.append(next_date)
+            
+            # Future predictions
+            future_resid_preds = []
+            
+            # Based on model_weekly.txt, we need to adapt to the correct input structure
+            # The STT-ATTLSTM model expects 3 inputs:
+            # 1. Residual sequence (shape: batch, window_size, 1)
+            # 2. Other components (trend+seasonal) sequence (shape: batch, window_size, 2)
+            # 3. Last residual value (shape: batch, 1)
+            
+            # Extract the window size from the model input shape
+            window_size = input_shapes[0][1] if num_inputs > 0 else 16
+            print(f"Debug - Using window size: {window_size}")
+            
+            # Prepare sequences with correct shapes
+            if num_inputs == 3:
+                # Get sequences for residual and other components
+                last_resid_seq = stl_data['last_resid_seq']
+                last_other_seq = stl_data['last_other_seq']
+                last_resid_input = stl_data['last_resid_input']
+                
+                # Reshape if needed to match expected dimensions
+                if last_resid_seq.shape[1] != window_size:
+                    print(f"Debug - Reshaping residual sequence from {last_resid_seq.shape} to match window size {window_size}")
+                    # Use the last 'window_size' elements
+                    last_resid_seq = last_resid_seq[:, -window_size:, :]
+                    
+                if last_other_seq.shape[1] != window_size:
+                    print(f"Debug - Reshaping other sequence from {last_other_seq.shape} to match window size {window_size}")
+                    # Use the last 'window_size' elements
+                    last_other_seq = last_other_seq[:, -window_size:, :]
+                    
+                # Generate predictions
+                for i in range(4):
+                    # Make prediction with triple input
+                    pred_scaled = model.predict(
+                        [last_resid_seq, last_other_seq, last_resid_input],
+                        verbose=0
+                    ).flatten()[0]
+                    
+                    # Inverse transform
+                    pred_resid = scalers['weekly']['resid'].inverse_transform([[pred_scaled]])[0, 0]
                     future_resid_preds.append(pred_resid)
-
-                    current_X1 = np.roll(current_X1, -1)
-                    current_X1[-1] = pred_scaled
-
+                    
+                    # Update sequences for next prediction
+                    last_resid_seq = np.roll(last_resid_seq, -1, axis=1)
+                    last_resid_seq[0, -1, 0] = pred_scaled
+                    
+                    # Update other sequence (trend + seasonal)
+                    # Calculate next week's position
+                    current_week = (len(resid) + i) % 52
+                    trend_val = trend.values[-1]  # Assume constant trend
+                    seasonal_val = seasonal.values[current_week]
+                    
+                    # Transform and update
+                    other_vals = np.array([[trend_val, seasonal_val]])
+                    other_scaled = scalers['weekly']['other'].transform(other_vals)
+                    last_other_seq = np.roll(last_other_seq, -1, axis=1)
+                    last_other_seq[0, -1, 0] = other_scaled[0, 0]  # trend
+                    last_other_seq[0, -1, 1] = other_scaled[0, 1]  # seasonal
+                    
+                    # Update last residual input
+                    last_resid_input = np.array([[pred_scaled]])
+                    
+            elif num_inputs == 1:
+                # Model expects a single input with shape (batch, window_size, 3)
+                # We need to create a combined input with residual, trend, and seasonal
+                
+                # Extract sequences and reshape them
+                residual_seq = stl_data['last_resid_seq']
+                trend_seq = stl_data['last_other_seq'][:, :, 0:1]
+                seasonal_seq = stl_data['last_other_seq'][:, :, 1:2]
+                
+                # Combine into a single sequence with 3 channels
+                combined_seq = np.concatenate([residual_seq, trend_seq, seasonal_seq], axis=2)
+                
+                # Ensure correct window size
+                if combined_seq.shape[1] != window_size:
+                    print(f"Debug - Reshaping combined sequence from {combined_seq.shape} to match window size {window_size}")
+                    combined_seq = combined_seq[:, -window_size:, :]
+                
+                # Generate predictions
+                for i in range(4):
+                    # Make prediction with single input
+                    pred_scaled = model.predict(combined_seq, verbose=0).flatten()[0]
+                    
+                    # Inverse transform
+                    pred_resid = scalers['weekly']['resid'].inverse_transform([[pred_scaled]])[0, 0]
+                    future_resid_preds.append(pred_resid)
+                    
+                    # Update sequence for next prediction
+                    combined_seq = np.roll(combined_seq, -1, axis=1)
+                    
+                    # Calculate next week's trend and seasonal components
                     current_week = (len(resid) + i) % 52
                     trend_val = trend.values[-1]
                     seasonal_val = seasonal.values[current_week]
+                    
+                    # Transform and update
+                    trend_scaled = scalers['weekly']['other'].transform([[trend_val, seasonal_val]])[0, 0]
+                    seasonal_scaled = scalers['weekly']['other'].transform([[trend_val, seasonal_val]])[0, 1]
+                    
+                    # Update combined sequence
+                    combined_seq[0, -1, 0] = pred_scaled       # residual
+                    combined_seq[0, -1, 1] = trend_scaled      # trend
+                    combined_seq[0, -1, 2] = seasonal_scaled   # seasonal
+            
+            else:
+                # Fallback to a simpler approach
+                print("Debug - Using fallback approach with sequence reshaping")
+                
+                # Create a reshaped sequence matching what the model expects
+                if hasattr(model, 'input_shape') and model.input_shape is not None:
+                    expected_shape = model.input_shape
+                    if isinstance(expected_shape, tuple):
+                        # Single input expected
+                        batch_size, seq_len, features = 1, expected_shape[1], expected_shape[2]
+                        
+                        # Create a sequence with zeros of the right shape
+                        sequence = np.zeros((batch_size, seq_len, features))
+                        
+                        # Fill with the residual data we have
+                        resid_scaled = scalers['weekly']['resid'].transform(resid.values[-seq_len:].reshape(-1, 1))
+                        for i in range(min(seq_len, len(resid_scaled))):
+                            sequence[0, i, 0] = resid_scaled[i]
+                        
+                        # Fill with trend and seasonal data if we have more features
+                        if features > 1:
+                            trend_seasonal = np.vstack([
+                                trend.values[-seq_len:],
+                                seasonal.values[-(seq_len % 52):(-(seq_len % 52) + seq_len)]
+                            ]).T
+                            trend_seasonal_scaled = scalers['weekly']['other'].transform(trend_seasonal)
+                            
+                            for i in range(min(seq_len, len(trend_seasonal_scaled))):
+                                if features >= 2:
+                                    sequence[0, i, 1] = trend_seasonal_scaled[i, 0]  # trend
+                                if features >= 3:
+                                    sequence[0, i, 2] = trend_seasonal_scaled[i, 1]  # seasonal
+                        
+                        # Generate predictions
+                        for i in range(4):
+                            pred_scaled = model.predict(sequence, verbose=0).flatten()[0]
+                            pred_resid = scalers['weekly']['resid'].inverse_transform([[pred_scaled]])[0, 0]
+                            future_resid_preds.append(pred_resid)
+                            
+                            # Update sequence for next prediction
+                            sequence = np.roll(sequence, -1, axis=1)
+                            sequence[0, -1, 0] = pred_scaled
+                            
+                            # Update other features if we have them
+                            if features > 1:
+                                current_week = (len(resid) + i) % 52
+                                trend_val = trend.values[-1]
+                                seasonal_val = seasonal.values[current_week]
+                                
+                                # Transform and update
+                                ts_scaled = scalers['weekly']['other'].transform([[trend_val, seasonal_val]])
+                                if features >= 2:
+                                    sequence[0, -1, 1] = ts_scaled[0, 0]  # trend
+                                if features >= 3:
+                                    sequence[0, -1, 2] = ts_scaled[0, 1]  # seasonal
+                    else:
+                        # Multiple inputs expected (fallback)
+                        print("Debug - Complex input shape, falling back to simple prediction")
+                        # Simple prediction logic for fallback
+                        for i in range(4):
+                            # Just estimate based on previous data patterns
+                            last_4_resid = resid.values[-4:]
+                            pred_resid = np.mean(last_4_resid)  # Simple average forecast
+                            future_resid_preds.append(pred_resid)
+                else:
+                    # Very simple fallback
+                    print("Debug - No input shape detected, using simple average")
+                    for i in range(4):
+                        last_4_resid = resid.values[-4:]
+                        pred_resid = np.mean(last_4_resid)  # Simple average forecast
+                        future_resid_preds.append(pred_resid)
+            
+            # Reconstruct predictions (residual + trend + seasonal)
+            trend_forecast = [trend.values[-1]] * 4  # Assume constant trend
+            seasonal_forecast = [seasonal.values[(len(resid) + i) % 52] for i in range(4)]
+            
+            # Final predictions
+            predictions = np.array(future_resid_preds) + np.array(trend_forecast) + np.array(seasonal_forecast)
+            
+            # Add confidence bounds (±10%)
+            margin = 0.10
+            lower_bounds = predictions * (1 - margin)
+            upper_bounds = predictions * (1 + margin)
+            
+            # Format results
+            results = {
+                'date': [d.strftime('%Y-%m-%d') for d in future_dates],
+                'prediction': predictions.tolist(),
+                'lower_bound': lower_bounds.tolist(),
+                'upper_bound': upper_bounds.tolist()
+            }
+            nested_results = []
 
-                    current_X2 = np.roll(current_X2, -1, axis=0)
-                    current_X2[-1] = scaler_other.transform([[trend_val, seasonal_val]])[0]
-                    current_resid = np.array([pred_scaled])
-
-                # === 6. Reconstruct Forecast ===
-                last_date_weekly = pd.to_datetime(df_result['date']).iloc[-1]
-                future_dates_weekly = [last_date_weekly + timedelta(weeks=i+1) for i in range(future_steps_weekly)]
-                trend_forecast = [trend.values[-1]] * future_steps_weekly
-                seasonal_forecast = [seasonal.values[(len(resid) + i) % 52] for i in range(future_steps_weekly)]
-
-                future_forecast_attlstm = (
-                    np.array(future_resid_preds)
-                    + np.array(trend_forecast)
-                    + np.array(seasonal_forecast)
-                )
-
-                margin = 0.10
-                lower_bound_attlstm = future_forecast_attlstm * (1 - margin)
-                upper_bound_attlstm = future_forecast_attlstm * (1 + margin)
-
-                # === 7. Buat Output ke Dictionary ===
-                forecast_dict = {
-                    'status': 'success',
-                    'forecast': []
+            for i in range(len(results['date'])):
+                data_point = {
+                    'date': results['date'][i],
+                    'prediction': results['prediction'][i],
+                    'lower_bound': results['lower_bound'][i],
+                    'upper_bound': results['upper_bound'][i]
                 }
+                nested_results.append(data_point)
+            
+            return nested_results
+        except Exception as e:
+            print(f"❌ Error in weekly prediction: {str(e)}")
+            traceback.print_exc()
+            return "Terjadi kesalahan saat memproses prediksi mingguan."
 
-                for i in range(future_steps_weekly):
-                    forecast_dict['forecast'].append({
-                        'tanggal': future_dates_weekly[i].strftime('%Y-%m-%d'),
-                        'Prediksi Penjualan (Rp)': int(round(future_forecast_attlstm[i])),
-                        'Lower Bound (Rp)': int(round(lower_bound_attlstm[i])),
-                        'upper_bound (Rp)': int(round(upper_bound_attlstm[i]))
-                    })
+    def predict_monthly():
+        """Generate monthly sales prediction for next 3 months starting from the next month"""
+        try:
+            if ml_models['monthly'] is None or 'monthly_stl' not in historical_data:
+                print("❌ Error in monthly prediction: model belum tersedia")
+                return "Model bulanan belum tersedia."
+            
+            current_date = datetime.datetime.now().date()
+            
+            monthly_df = historical_data['monthly']
+            stl_data = historical_data['monthly_stl']
+            model = ml_models['monthly']
+            
+            # Get STL components
+            trend = stl_data['trend']
+            seasonal = stl_data['seasonal']
+            resid = stl_data['resid']
+            
+            # Get last sequence
+            last_seq = stl_data['last_seq']
+            
+            # Get last date
+            last_date = monthly_df['date'].iloc[-1]
+            
+            # Generate prediction dates (next 3 months, starting from next month)
+            future_dates = []
+            # Mulai dari bulan depan, bukan bulan berjalan
+            if current_date.month == 12:
+                next_month_date = datetime.date(current_date.year + 1, 1, 1)
+            else:
+                next_month_date = datetime.date(current_date.year, current_date.month + 1, 1)
+            
+            for i in range(3):
+                # Kalkulasi tahun dan bulan untuk tanggal yang akan datang
+                year = next_month_date.year + ((next_month_date.month + i - 1) // 12)
+                month = ((next_month_date.month + i - 1) % 12) + 1
+                future_date = datetime.date(year, month, 1)
+                future_dates.append(future_date)
+            
+            # Generate predictions
+            predictions = []
+            current_seq = last_seq.copy()
+            
+            for i in range(3):
+                # Predict next value
+                pred_scaled = model.predict(current_seq)[0, 0]
+                
+                # Inverse transform
+                pred_resid = scalers['monthly'].inverse_transform([[pred_scaled]])[0, 0]
+                
+                # Get trend and seasonal for this month
+                # Hitung bulan yang sesuai dengan urutan prediksi
+                pred_month = (next_month_date.month + i - 1) % 12 + 1
+                
+                trend_val = trend.iloc[-1]  # Assume constant trend
+                seasonal_idx = pred_month - 1  # Adjust for 0-based indexing in seasonal component
+                seasonal_val = seasonal.iloc[seasonal_idx]
+                
+                # Reconstruct prediction
+                prediction = pred_resid + trend_val + seasonal_val
+                predictions.append(prediction)
+                
+                # Update sequence for next prediction
+                current_seq = np.roll(current_seq, -1, axis=1)
+                current_seq[0, -1, 0] = pred_scaled
+            
+            # Tambahkan confidence bounds (±10%)
+            margin = 0.10
+            lower_bounds = [pred * (1 - margin) for pred in predictions]
+            upper_bounds = [pred * (1 + margin) for pred in predictions]
+            
+            # Format hasil dalam dictionary
+            results = {
+                'date': [d.strftime('%Y-%m-%d') for d in future_dates],
+                'prediction': [float(p) for p in predictions],
+                'lower_bound': [float(lb) for lb in lower_bounds],
+                'upper_bound': [float(ub) for ub in upper_bounds]
+            }
 
-                # Format hasil ke DataFrame
-                attlstm_results = pd.DataFrame(forecast_dict['forecast'])
+            nested_results = []
 
-                # Print hasil prediksi mingguan
-                print("\nPrediksi ATT-LSTM 4 Minggu Ke Depan:")
-                print(attlstm_results.head(4))
+            for i in range(len(results['date'])):
+                data_point = {
+                    'date': results['date'][i],
+                    'prediction': results['prediction'][i],
+                    'lower_bound': results['lower_bound'][i],
+                    'upper_bound': results['upper_bound'][i]
+                }
+                nested_results.append(data_point)
+            
+            return nested_results
 
-                result_json = attlstm_results.to_dict(orient='records')
+        except Exception as e:
+            print(f"❌ Error in monthly prediction: {e}")
+            traceback.print_exc()
+            return "Terjadi kesalahan saat memproses prediksi bulanan."
+        
+        
+    if frequency.upper() == 'D' :
+        hasil_prediksi = predict_daily()
+    elif frequency.upper()=='W':
+        hasil_prediksi = predict_weekly()
+    elif frequency.upper()=='ME':
+        hasil_prediksi = predict_monthly()
 
-                return jsonify({
-                    "message": "✅ Prediksi berhasil",
-                    "data": result_json
-                }), 200
 
-            except Exception as e:
-                traceback_str = traceback.format_exc()
-                print(f"❌ Terjadi error:\n{traceback_str}")
-                return jsonify({
-                    "message": "❌ Terjadi error saat melakukan prediksi.",
-                    "error": str(e)
-                }), 500
+    return jsonify({
+        'status': 'success',
+        'data': hasil_prediksi
+    }), 200

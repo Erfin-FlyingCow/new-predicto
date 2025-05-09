@@ -65,3 +65,11 @@ class PasswordResetToken(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('reset_tokens', lazy=True))
+
+
+class TokenBlacklist(db.Model):
+    __tablename__ = 'token_blacklist'
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(255), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
