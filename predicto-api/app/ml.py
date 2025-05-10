@@ -434,10 +434,10 @@ def predict():
 
             for i in range(len(results['date'])):
                 data_point = {
-                    'date': int(results['date'][i]),
-                    'prediction': results['prediction'][i],
-                    'lower_bound': results['lower_bound'][i],
-                    'upper_bound': results['upper_bound'][i]
+                    'date': results['date'][i],
+                    'prediction': float(results['prediction'][i]),
+                    'lower_bound': float(results['lower_bound'][i]),
+                    'upper_bound': float(results['upper_bound'][i])
                 }
                 nested_results.append(data_point)
             
@@ -688,18 +688,18 @@ def predict():
             # Format results
             results = {
                 'date': [d.strftime('%Y-%m-%d') for d in future_dates],
-                'prediction': predictions.tolist(),
-                'lower_bound': lower_bounds.tolist(),
-                'upper_bound': upper_bounds.tolist()
+                'prediction': predictions,
+                'lower_bound': lower_bounds,
+                'upper_bound': upper_bounds
             }
             nested_results = []
 
             for i in range(len(results['date'])):
                 data_point = {
                     'date': results['date'][i],
-                    'prediction': results['prediction'][i],
-                    'lower_bound': results['lower_bound'][i],
-                    'upper_bound': results['upper_bound'][i]
+                    'prediction': float(results['prediction'][i]),
+                    'lower_bound': float(results['lower_bound'][i]),
+                    'upper_bound': float(results['upper_bound'][i])
                 }
                 nested_results.append(data_point)
             
@@ -790,12 +790,13 @@ def predict():
 
             nested_results = []
 
+            
             for i in range(len(results['date'])):
                 data_point = {
                     'date': results['date'][i],
-                    'prediction': results['prediction'][i],
-                    'lower_bound': results['lower_bound'][i],
-                    'upper_bound': results['upper_bound'][i]
+                    'prediction': float(results['prediction'][i]),
+                    'lower_bound': float(results['lower_bound'][i]),
+                    'upper_bound': float(results['upper_bound'][i])
                 }
                 nested_results.append(data_point)
             

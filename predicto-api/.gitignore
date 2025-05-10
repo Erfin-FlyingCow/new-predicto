@@ -1,2 +1,3 @@
 predicto-api/.env
 predicto-api/frontend/.venv
+predicto-api/app/__pycache__
