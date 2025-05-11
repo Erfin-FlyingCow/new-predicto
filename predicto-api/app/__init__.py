@@ -39,7 +39,9 @@ def create_app():
     # Register blueprint (routes)
     from .auth import auth_bp
     from .ml import ml_bp
+    from .chatbot import chatbot_bp
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ml_bp, url_prefix="/api/ml")
+    app.register_blueprint(chatbot_bp, url_prefix="/api/chatbot")
 
     return app

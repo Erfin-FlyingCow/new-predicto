@@ -28,3 +28,8 @@ holidays
 scikit-learn
 joblib==1.4.2
 tensorflow
+numpy
+sentence-transformers
+nltk
+statsmodels
+tf-keras
