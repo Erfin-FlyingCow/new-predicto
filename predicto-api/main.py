@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 from app.models import User, PasswordResetToken
 from app import mail 
+import json
 
 # Membuat instance aplikasi
 app = create_app()
@@ -138,30 +139,297 @@ def lupa_password():
 def dashboard():
     return render_template('main-feature/dashboard.html')
 
-@app.route('/prediction', methods=['GET', 'POST'])
+@app.route('/prediction')
 def prediction():
-    if request.method == 'POST':
-        # TODO: Tambahkan logika prediksi
-        return render_template('main-feature/prediction.html', hasil='Contoh hasil prediksi')
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
     return render_template('main-feature/prediction.html')
+
+@app.route('/api/ml/predict')
+def predict():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Get period from request arguments
+    period = request.args.get('period', 'daily')
+    
+    # Map period to the API's expected frequency format
+    frequency_map = {
+        'daily': 'D',
+        'weekly': 'W',
+        'monthly': 'ME'
+    }
+    
+    frequency = frequency_map.get(period)  # Default to daily if invalid period
+    
+    headers = {
+        'Authorization': f'Bearer {session["access_token"]}',
+        'Content-Type': 'application/json'
+    }
+    
+    # Create the JSON payload with frequency
+    payload = {
+        "frequency": frequency
+    }
+    
+    try:
+        # Use POST with JSON body instead of GET with query parameters
+        response = requests.post(
+            f'{API_BASE_URL}/ml/predict',
+            headers=headers,
+            json=payload  # This will be sent as raw JSON in the request body
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            # Log the error response for debugging
+            error_message = f"API Error: {response.status_code}"
+            try:
+                error_data = response.json()
+                error_message = f"{error_message}, {json.dumps(error_data)}"
+            except:
+                error_message = f"{error_message}, {response.text}"
+                
+            print(error_message)
+            return jsonify({'error': 'Failed to get prediction', 'status': response.status_code, 'details': response.text}), response.status_code
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Request Exception: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/ml/predict/save', methods=['POST'])
+def save_prediction():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get prediction data from request
+        prediction_data = request.json
+        
+        # Forward request to backend API
+        headers = {
+            'Authorization': f'Bearer {session["access_token"]}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Log the request data for debugging
+        print(f"Sending prediction data to API: {json.dumps(prediction_data)}")
+        
+        # Send the prediction data to backend for saving
+        response = requests.post(
+            f'{API_BASE_URL}/ml/predict/save',
+            headers=headers,
+            json=prediction_data,
+            timeout=30
+        )
+        
+        # Log the response for debugging
+        print(f"Response from API: Status {response.status_code}")
+        try:
+            response_data = response.json()
+            print(f"Response data: {json.dumps(response_data)}")
+        except:
+            print(f"Raw response: {response.text}")
+        
+        if response.status_code == 201 or response.status_code == 200:
+            return jsonify({'message': 'Prediction history saved successfully'}), 200
+        else:
+            return jsonify({
+                'error': 'Error saving prediction', 
+                'status': response.status_code, 
+                'details': response.json() if response.content else 'No details available'
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in save_prediction: {str(e)}")
+        return jsonify({
+            'error': f'Error saving prediction: {str(e)}'
+        }), 500
+    
+@app.route('/api/ml/predict/histories', methods=['GET'])
+def get_prediction_histories():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Set up the headers with the access token
+        headers = {
+            'Authorization': f'Bearer {session["access_token"]}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Log request for debugging
+        print(f"Making request to {API_BASE_URL}/ml/predict/histories with token {session['access_token'][:10]}...")
+        
+        # Make request to backend API
+        response = requests.get(
+            f'{API_BASE_URL}/ml/predict/histories',
+            headers=headers,
+            timeout=30
+        )
+        
+        # Log response for debugging
+        print(f"Received response with status code: {response.status_code}")
+        print(f"Response headers: {response.headers}")
+        
+        if response.content:
+            try:
+                # Get raw content first for logging
+                content_text = response.text
+                print(f"Raw response content: {content_text[:1000]}...")  # Print first 1000 chars
+                
+                # Try to parse as JSON
+                response_data = response.json()
+                print(f"Parsed as JSON: {json.dumps(response_data)[:500]}...")  # Print first 500 chars
+                
+                # Check structure
+                if isinstance(response_data, dict) and 'histories' in response_data:
+                    print(f"Found 'histories' key with {len(response_data['histories'])} items")
+                    if response_data['histories']:
+                        first_item = response_data['histories'][0]
+                        print(f"First item keys: {list(first_item.keys())}")
+                elif isinstance(response_data, list):
+                    print(f"Response is a list with {len(response_data)} items")
+                    if response_data:
+                        first_item = response_data[0]
+                        print(f"First item keys: {list(first_item.keys())}")
+                else:
+                    print(f"Unknown response structure: {type(response_data)}")
+                
+            except Exception as e:
+                print(f"Could not parse response as JSON. Error: {str(e)}")
+                print(f"Raw content: {response.text[:500]}...")
+        else:
+            print("Response has no content")
+        
+        if response.status_code == 200:
+            # Try to extract the content directly without modifying
+            return response.text, 200, {'Content-Type': 'application/json'} 
+        else:
+            error_msg = f"Error fetching prediction histories: status {response.status_code}"
+            print(error_msg)
+            return jsonify({
+                'error': error_msg, 
+                'status': response.status_code, 
+                'details': response.json() if response.content else 'No details available'
+            }), response.status_code
+            
+    except Exception as e:
+        error_msg = f"Exception in get_prediction_histories: {str(e)}"
+        print(error_msg)
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': error_msg
+        }), 500
+
 
 @app.route('/history')
 def history():
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
     return render_template('main-feature/history-prediction.html')
 
 @app.route('/history/<id>')
 def detail_history(id):
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
     return render_template('main-feature/detail_history-prediction.html', id=id)
 
 @app.route('/chatbot')
 def chatbot():
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
     return render_template('main-feature/chatbot.html')
+
+@app.route('/api/chatbot/', methods=['POST'])
+def api_chatbot():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get message from request
+        message = request.json.get('message')
+        
+        if not message:
+            return jsonify({'error': 'No message provided'}), 400
+        
+        # Forward request to backend API
+        headers = {
+            'Authorization': f'Bearer {session["access_token"]}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(
+            f'{API_BASE_URL}/chatbot/',
+            headers=headers,
+            json={'message': message},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'error': 'Error from API', 
+                'status': response.status_code, 
+                'response': 'Maaf, layanan chatbot sedang tidak tersedia.'
+            }), response.status_code
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'response': 'Terjadi kesalahan saat menghubungi server.'
+        }), 500
+
 
 @app.route('/setting', methods=['GET', 'POST'])
 def setting():
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
+    
+    # Get user data from API
+    try:
+        headers = {
+            'Authorization': f'Bearer {session["access_token"]}'
+        }
+        response = requests.get(f'{API_BASE_URL}/auth/me', headers=headers)
+        
+        if response.status_code == 200:
+            user_data = response.json()
+            # Format the created_at date if needed
+            if 'created_at' in user_data:
+                # Assuming created_at is in ISO format
+                from datetime import datetime
+                try:
+                    # Parse the datetime and format it as DD-MM-YYYY
+                    created_at = datetime.fromisoformat(user_data['created_at'].replace('Z', '+00:00'))
+                    user_data['formatted_date'] = created_at.strftime('%d-%m-%Y')
+                except:
+                    # Fallback if date parsing fails
+                    user_data['formatted_date'] = user_data['created_at']
+        else:
+            flash('Failed to fetch user data', 'error')
+            user_data = {
+                'username': '',
+                'email': '',
+                'formatted_date': ''
+            }
+    except Exception as e:
+        flash(f'Error fetching user data: {str(e)}', 'error')
+        user_data = {
+            'username': '',
+            'email': '',
+            'formatted_date': ''
+        }
+        
     if request.method == 'POST':
         return redirect(url_for('dashboard'))
-    return render_template('main-feature/setting.html')
 
 
 @app.route("/reset-password/<token>", methods=["GET"])

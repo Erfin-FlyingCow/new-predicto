@@ -116,7 +116,7 @@ def forgot_password():
     db.session.commit()
 
     # Kirim email ke user
-    reset_link = f"{request.host_url}reset-password/{reset_token}"
+    reset_link = f"{request.host_url}auth/new-password/{reset_token}"
     msg = Message(
         subject="Reset Password",
         sender="youremail@gmail.com",
