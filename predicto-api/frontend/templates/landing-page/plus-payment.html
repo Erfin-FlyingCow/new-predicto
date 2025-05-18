@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predicto - Pembayaran Paket Plus</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
+      body {
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+      }
+      .payment-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 500px;
+        padding: 40px;
+      }
+      .package-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .package-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #007bff;
+        margin-bottom: 10px;
+      }
+      .package-price {
+        font-size: 32px;
+        font-weight: 700;
+        color: #007bff;
+      }
+      .payment-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .form-group {
+        position: relative;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #495057;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s ease;
+      }
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      }
+      .payment-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.1s ease;
+        margin-top: 10px;
+      }
+      .payment-btn:hover {
+        background-color: #0056b3;
+      }
+      .payment-btn:active {
+        transform: scale(0.98);
+      }
+      @media (max-width: 576px) {
+        .payment-container {
+          padding: 20px;
+          margin: 0 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="payment-container">
+      <div class="package-header">
+        <div class="package-title">Plus Package</div>
+        <div class="package-price">Rp 150.000/bln</div>
+      </div>
+      <form class="payment-form">
+        <div class="form-group">
+          <label for="name">Username</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Masukkan username"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Masukkan alamat email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="payment-method">Metode Pembayaran</label>
+          <select id="payment-method" name="payment-method" required>
+            <option value="">Pilih Metode Pembayaran</option>
+            <option value="transfer-bca">Transfer Bank BCA</option>
+            <option value="transfer-mandiri">Transfer Bank Mandiri</option>
+            <option value="dana">DANA</option>
+            <option value="gopay">GoPay</option>
+            <option value="credit-card">Kartu Kredit</option>
+          </select>
+        </div>
+        <button type="submit" class="payment-btn">Lanjutkan Pembayaran</button>
+      </form>
+    </div>
+  </body>
+</html>

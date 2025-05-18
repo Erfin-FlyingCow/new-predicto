@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, flash, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User, PasswordResetToken
 from datetime import datetime, timedelta
@@ -10,6 +10,7 @@ import re
 import uuid
 from flask_jwt_extended import get_jwt, get_jwt_identity
 from app.models import TokenBlacklist
+import time
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -137,41 +138,63 @@ def forgot_password():
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
-    data = request.get_json()
-    new_password = data.get('new_password')
+    # Deteksi tipe request
+    if request.is_json:
+        data = request.get_json()
+        new_password = data.get('new_password')
+        confirm_password = data.get('confirm_password')
+    else:
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
 
-    if not new_password:
-        return jsonify({"message": "New password is required"}), 400
+    # Validasi awal
+    if not new_password or not confirm_password:
+        message = "Semua kolom wajib diisi."
+        if request.is_json:
+            return jsonify({"message": message}), 400
+        flash(message, "danger")
+        return redirect(request.url)
 
-    # Validasi password: minimal 8 karakter, huruf besar, dan angka
+    if new_password != confirm_password:
+        message = "Password dan konfirmasi tidak cocok."
+        if request.is_json:
+            return jsonify({"message": message}), 400
+        flash(message, "danger")
+        return redirect(request.url)
+
+    # Validasi password
     if len(new_password) < 8 or not re.search(r'[A-Z]', new_password) or not re.search(r'\d', new_password):
-        return jsonify({
-            "message": "Password must be at least 8 characters long, contain at least one uppercase letter and one digit."
-        }), 400
+        message = "Password harus minimal 8 karakter, mengandung huruf besar dan angka."
+        if request.is_json:
+            return jsonify({"message": message}), 400
+        flash(message, "danger")
+        time.sleep(2)  # ⏱️ Delay 2 detik
+        return redirect(request.url)
 
-    # Cek token di database
+    # Validasi token
     token_entry = PasswordResetToken.query.filter_by(token=token, used=False).first()
+    if not token_entry or token_entry.expires_at < datetime.utcnow():
+        message = "Token tidak valid atau sudah kadaluarsa."
+        if request.is_json:
+            return jsonify({"message": message}), 400
+        flash(message, "danger")
+        time.sleep(2)  # ⏱️ Delay 2 detik
+        return redirect(url_for('lupa_password'))
 
-    if not token_entry:
-        return jsonify({"message": "Invalid or expired token"}), 400
-
-    # Cek apakah token sudah kadaluarsa
-    if token_entry.expires_at < datetime.utcnow():
-        return jsonify({"message": "Token has expired"}), 400
-
-    # Update password user
+    # Update password
     user = User.query.get(token_entry.user_id)
     user.password_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
-
-    # Tandai token sudah dipakai
     token_entry.used = True
-
     db.session.commit()
 
-    return jsonify({"message": "Password has been successfully reset"}), 200
+    message = "Password berhasil direset."
+    if request.is_json:
+        return jsonify({"message": message}), 200
+    flash(message, "success")
+    time.sleep(2)
+    return redirect(url_for('login'))
 
-
-
+    
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
