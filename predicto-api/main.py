@@ -169,6 +169,12 @@ def reset_password_form(token):
     return render_template("auth/new-password.html", token=token)
 
 
+@app.route('/logout')
+def logout():
+    session.pop('access_token', None)
+    return redirect(url_for('home'))
+
+
 
 # Menjalankan aplikasi
 if __name__ == '__main__':

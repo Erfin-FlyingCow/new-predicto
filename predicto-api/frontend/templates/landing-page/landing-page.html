@@ -1,189 +1,311 @@
-{% extends "base.html" %} {% block content %}
-<!-- Landing Page Hero Section -->
-<p class="text-wrapper">
-  Platform Kecerdasan Buatan Berbasis Website dengan Chatbot Interaktif untuk
-  Prediksi Penjualan pada Pasar iPhone di Indonesia.
-</p>
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predicto - Platform Prediksi Penjualan iPhone</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/landing-page.css') }}"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="container">
+        <div class="logo">
+          <a href="{{url_for('home')}}"
+            ><img
+              src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+              alt="Predicto Logo"
+          /></a>
+        </div>
+        <div class="nav-links">
+          <a href="#" class="active">Home</a>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#about">About</a>
+          <!-- Tambahkan tombol login dan register untuk tampilan mobile -->
+          <div class="mobile-auth-buttons">
+            <a href="{{url_for('login')}}" class="btn-secondary">Login</a>
+            <a href="{{url_for('register')}}" class="btn-primary">Register</a>
+          </div>
+        </div>
+        <div class="auth-buttons">
+          <a href="{{url_for('login')}}" class="btn-secondary">Login</a>
+          <a href="{{url_for('register')}}" class="btn-primary">Register</a>
+        </div>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </nav>
 
-<!-- Features Section -->
-<div id="features" class="overlap-group-2">
-  <div class="text-wrapper-11">Features</div>
-  <div class="overlap-2">
-    <div class="text-wrapper-12">Prediksi Penjualan</div>
-    <p class="p">
-      Gunakan kecanggihan AI untuk memprediksi tren penjualan iPhone secara
-      akurat berdasarkan data historis. Prediksi ini membantu bisnis dalam
-      mengambil keputusan.
-    </p>
-    <img
-      class="img"
-      src="{{ url_for('static', filename='assets/fitur1.png') }}"
-    />
-  </div>
-  <div class="overlap-3">
-    <div class="text-wrapper-13">Dashboard Interaktif</div>
-    <p class="text-wrapper-14">
-      Pantau performa penjualan dengan dashboard real-time yang intuitif.
-      Visualisasi data yang dinamis memudahkan analisis tren, perbandingan, dan
-      pengambilan keputusan strategis dengan lebih cepat dan akurat.
-    </p>
-    <img
-      class="img"
-      src="{{ url_for('static', filename='assets/fitur2.png') }}"
-    />
-  </div>
-  <div class="overlap-4">
-    <div class="text-wrapper-15">Chatbot</div>
-    <p class="text-wrapper-14">
-      Dapatkan jawaban instan melalui chatbot interaktif kami! Chatbot membantu
-      pengguna menjawab pertanyaan seputar penjualan dan memberikan penjelasan
-      mengenai website secara umum.
-    </p>
-    <img
-      class="AI-powered-chatbot"
-      src="{{ url_for('static', filename='assets/fitur3.png') }}"
-    />
-  </div>
-</div>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <h1>Predicto.</h1>
+        <p class="hero-text">
+          Platform Kecerdasan Buatan Berbasis Website dengan Chatbot Interaktif
+          untuk Prediksi Penjualan pada Pasar iPhone di Indonesia.
+        </p>
+        <div class="hero-buttons">
+          <a href="{{url_for('register')}}" class="btn-primary">Register</a>
+          <a href="{{url_for('login')}}" class="btn-secondary">Login</a>
+        </div>
+      </div>
+    </section>
 
-<!-- Pricing Section -->
-<div id="pricing" class="overlap-5">
-  <div class="text-wrapper-16">Pricing</div>
-  <div class="overlap-6">
-    <div class="rectangle-4"></div>
-    <div class="text-wrapper-17">Akses Chatbot plus</div>
-    <img
-      class="material-symbols"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <div class="text-wrapper-18">Dashboard plus</div>
-    <img
-      class="material-symbols-2"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <p class="text-wrapper-19">Prediksi penjualan mingguan (limitasi harian)</p>
-    <img
-      class="material-symbols-3"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <div class="text-wrapper-20">Prediksi penjualan harian</div>
-    <img
-      class="material-symbols-4"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <img
-      class="line"
-      src="{{ url_for('static', filename='assets/line.svg') }}"
-    />
-    <div class="rectangle-5"></div>
-    <div class="text-wrapper-21">Pilih Paket</div>
-    <div class="text-wrapper-22">/bln</div>
-    <div class="text-wrapper-23">Rp</div>
-    <div class="text-wrapper-24">150.000</div>
-    <div class="text-wrapper-25">Plus</div>
-  </div>
-  <div class="overlap-7">
-    <div class="overlap-8">
-      <div class="text-wrapper-26">Akses chatbot pro</div>
-      <img
-        class="material-symbols-5"
-        src="{{ url_for('static', filename='assets/centang.svg') }}"
-      />
-    </div>
-    <div class="overlap-9">
-      <div class="text-wrapper-26">Dashboard pro</div>
-      <img
-        class="material-symbols-6"
-        src="{{ url_for('static', filename='assets/centang.svg') }}"
-      />
-    </div>
-    <div class="overlap-10">
-      <div class="text-wrapper-27">Prediksi penjualan bulanan</div>
-      <img
-        class="material-symbols-7"
-        src="{{ url_for('static', filename='assets/centang.svg') }}"
-      />
-    </div>
-    <div class="text-wrapper-28">Prediksi penjualan mingguan</div>
-    <img
-      class="material-symbols-8"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <div class="text-wrapper-29">Prediksi penjualan harian</div>
-    <img
-      class="material-symbols-9"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <img
-      class="line-2"
-      src="{{ url_for('static', filename='assets/line.svg') }}"
-    />
-    <div class="overlap-11"><div class="text-wrapper-30">Pilih Paket</div></div>
-    <div class="overlap-12">
-      <div class="text-wrapper-31">/bln</div>
-      <div class="text-wrapper-32">250.000</div>
-    </div>
-    <div class="text-wrapper-33">Rp</div>
-    <div class="text-wrapper-34">Pro</div>
-  </div>
-  <div class="overlap-13">
-    <!-- Added the rectangle element for free package -->
-    <div class="overlap-14">
-      <div class="text-wrapper-35">Dashboard basic</div>
-      <img
-        class="material-symbols-10"
-        src="{{ url_for('static', filename='assets/centang.svg') }}"
-      />
-    </div>
-    <div class="text-wrapper-36">Akses chatbot (limitasi harian)</div>
-    <img
-      class="material-symbols-11"
-      src="{{ url_for('static', filename='assets/centang.svg') }}"
-    />
-    <div class="overlap-15"><div class="text-wrapper-30">Pilih Paket</div></div>
-    <div class="text-wrapper-37">/bln</div>
-    <div class="text-wrapper-38">Rp</div>
-    <div class="text-wrapper-39">0</div>
-    <div class="overlap-16">
-      <p class="text-wrapper-40">Prediksi penjualan harian (limitasi harian)</p>
-      <img
-        class="material-symbols-10"
-        src="{{ url_for('static', filename='assets/centang.svg') }}"
-      />
-    </div>
-    <div class="text-wrapper-41">Free</div>
-    <img
-      class="line-3"
-      src="{{ url_for('static', filename='assets/line.svg') }}"
-    />
-  </div>
-</div>
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2 class="section-title">Features</h2>
 
-<!-- About Section -->
-<div id="about" class="overlap-17">
-  <img
-    class="logo-removebg-2"
-    src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
-  />
-  <div class="predicto-adalah-wrapper">
-    <p class="predicto-adalah">
-      <br /><br /><br /><br /><br /><br />Predicto adalah platform berbasis web
-      yang menggabungkan teknologi Machine Learning dan Chatbot Interaktif untuk
-      membantu bisnis memprediksi tren penjualan iPhone di Indonesia.<br /><br />Predicto
-      hadir sebagai solusi berbasis kecerdasan buatan untuk membantu bisnis
-      ritel, khususnya dalam&nbsp;&nbsp;pasar iPhone di Indonesia, dalam
-      mengoptimalkan keputusan penjualan melalui analisis data
-      historis.&nbsp;&nbsp;Dengan menggunakan model time series forecasting,
-      platform ini memberikan prediksi penjualan yang&nbsp;&nbsp;akurat guna
-      menghindari kekurangan atau kelebihan stok, meningkatkan efektivitas
-      strategi promosi,&nbsp;&nbsp;serta mendukung pengambilan keputusan
-      berbasis data. <br /><br />Dilengkapi dengan chatbot interaktif, Predicto
-      memungkinkan pengguna, termasuk yang tidak memiliki latar belakang teknis,
-      untuk mengakses&nbsp;&nbsp;wawasan bisnis dengan mudah. Dengan pendekatan
-      ini, Predicto bertujuan meningkatkan efisiensi&nbsp;&nbsp;operasional dan
-      profitabilitas bisnis melalui pemanfaatan data yang lebih terstruktur dan
-      akurat.
-    </p>
-  </div>
-</div>
-{% endblock %}
+        <div class="feature-cards">
+          <div class="feature-card">
+            <div class="feature-image">
+              <img
+                src="{{ url_for('static', filename='assets/fitur1.png') }}"
+                alt="Prediksi Penjualan"
+              />
+            </div>
+            <h3>Prediksi Penjualan</h3>
+            <p>
+              Gunakan kecanggiahan AI untuk memprediksi tren penjualan iPhone
+              secara akurat berdasarkan data historis. Prediksi ini membantu
+              bisnis dalam mengambil keputusan.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-image">
+              <img
+                src="{{ url_for('static', filename='assets/fitur2.png') }}"
+                alt="Dashboard Interaktif"
+              />
+            </div>
+            <h3>Dashboard Interaktif</h3>
+            <p>
+              Pantau performa penjualan dengan dashboard real-time yang
+              intuitif. Visualisasi data yang dinamis memudahkan analisis tren,
+              perbandingan, dan pengambilan keputusan strategi dengan lebih
+              cepat dan akurat.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-image">
+              <img
+                src="{{ url_for('static', filename='assets/fitur3.png') }}"
+                alt="Chatbot"
+              />
+            </div>
+            <h3>Chatbot</h3>
+            <p>
+              Dapatkan jawaban instan melalui chatbot interaktif kami! Chatbot
+              membantu pengguna menjawab pertanyaan seputar penjualan dan
+              memberikan penjelasan mengenai website secara umum.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+      <div class="container">
+        <h2 class="section-title">Pricing</h2>
+
+        <div class="pricing-cards">
+          <div class="pricing-card">
+            <h3 class="plan-name">Free</h3>
+            <div class="price">
+              <span class="currency">Rp</span>
+              <span class="amount">0</span>
+              <span class="period">/bln</span>
+            </div>
+            <a href="#" class="btn-outline">Pilih Paket</a>
+            <ul class="features-list">
+              <li>Prediksi penjualan harian (limitasi harian)</li>
+              <li>Akses chatbot (limitasi harian)</li>
+              <li>Dashboard basic</li>
+            </ul>
+          </div>
+
+          <div class="pricing-card">
+            <h3 class="plan-name">Plus</h3>
+            <div class="price">
+              <span class="currency">Rp</span>
+              <span class="amount">150.000</span>
+              <span class="period">/bln</span>
+            </div>
+            <a href="#" class="btn-outline">Pilih Paket</a>
+            <ul class="features-list">
+              <li>Prediksi penjualan harian</li>
+              <li>Prediksi penjualan mingguan (limitasi harian)</li>
+              <li>Dashboard plus</li>
+              <li>Akses Chatbot plus</li>
+            </ul>
+          </div>
+
+          <div class="pricing-card">
+            <h3 class="plan-name">Pro</h3>
+            <div class="price">
+              <span class="currency">Rp</span>
+              <span class="amount">250.000</span>
+              <span class="period">/bln</span>
+            </div>
+            <a href="#" class="btn-outline">Pilih Paket</a>
+            <ul class="features-list">
+              <li>Prediksi penjualan harian</li>
+              <li>Prediksi penjualan mingguan</li>
+              <li>Prediksi penjualan bulanan</li>
+              <li>Dashboard pro</li>
+              <li>Akses chatbot pro</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+      <div class="container">
+        <div class="about-content">
+          <div class="about-logo">
+            <img
+              src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+              alt="Predicto Logo"
+            />
+          </div>
+          <p class="about-text">
+            "Predicto adalah platform web berbasis kecerdasan buatan yang
+            menggabungkan teknologi Machine Learning dan chatbot interaktif
+            untuk membantu bisnis ritel memprediksi tren penjualan iPhone di
+            Indonesia. Dengan model time series forecasting, Predicto menyajikan
+            prediksi akurat guna mengoptimalkan strategi promosi dan mendukung
+            pengambilan keputusan berbasis data. Melalui chatbot yang ramah
+            pengguna, bahkan bagi yang non-teknis, platform ini memudahkan akses
+            terhadap wawasan bisnis, sehingga meningkatkan efisiensi operasional
+            dan profitabilitas melalui analisis data historis yang terstruktur
+            dan tepat sasaran."
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <!-- <div class="footer-logo">
+            <img
+              src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+              alt="Predicto Logo"
+            />
+          </div> -->
+
+          <div class="footer-links">
+            <div class="footer-column">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#features">Fitur</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#about">About</a></li>
+              </ul>
+            </div>
+
+            <div class="footer-column">
+              <h4>Technology</h4>
+              <ul>
+                <li>Machine Learning</li>
+                <li>Time Series Forecasting</li>
+                <li>Flask Web</li>
+                <li>Chatbot Interaktif</li>
+              </ul>
+            </div>
+
+            <div class="footer-column">
+              <h4>Contact Us</h4>
+              <ul>
+                <li>Predicto</li>
+                <li>Email: contact@predicto.com</li>
+                <li>Lokasi: Depok, Jawa Barat</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="copyright">
+          <p>&copy; 2025 Predicto. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Hamburger menu toggle
+      const hamburger = document.querySelector(".hamburger");
+      const navLinks = document.querySelector(".nav-links");
+
+      hamburger.addEventListener("click", () => {
+        hamburger.classList.toggle("active");
+        navLinks.classList.toggle("active");
+      });
+
+      // Close menu when clicking on a link
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", () => {
+          hamburger.classList.remove("active");
+          navLinks.classList.remove("active");
+        });
+      });
+
+      // Active navigation highlighting based on scroll position
+      document.addEventListener("DOMContentLoaded", () => {
+        const sections = document.querySelectorAll("section[id]");
+        const navLinks = document.querySelectorAll(".nav-links a");
+
+        function highlightNavigation() {
+          let scrollY = window.pageYOffset;
+
+          sections.forEach((section) => {
+            const sectionHeight = section.offsetHeight;
+            const sectionTop = section.offsetTop - 100;
+            const sectionId = section.getAttribute("id");
+
+            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+              navLinks.forEach((link) => {
+                link.classList.remove("active");
+                if (link.getAttribute("href") === "#" + sectionId) {
+                  link.classList.add("active");
+                }
+              });
+            }
+          });
+
+          // Handle home/top section
+          if (scrollY < 100) {
+            navLinks.forEach((link) => {
+              link.classList.remove("active");
+              if (link.getAttribute("href") === "#") {
+                link.classList.add("active");
+              }
+            });
+          }
+        }
+
+        window.addEventListener("scroll", highlightNavigation);
+        highlightNavigation(); // Run once on page load
+      });
+    </script>
+  </body>
+</html>

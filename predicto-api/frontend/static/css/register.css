@@ -1,317 +1,140 @@
-/* static/css/register.css */
-@import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-
-/* Base Styles */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
-  font-family: "Poppins", sans-serif;
-  overflow-x: hidden;
-  background-color: #ffffff;
-}
-
-.container-center-horizontal {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  width: 100%;
-  min-height: 100vh;
+  align-items: center;
+  background-color: #212121;
 }
 
-/* Register Page */
-.register-page {
+.register-container {
   display: flex;
-  width: 100%;
-  position: relative;
+  width: 80%;
+  border-radius: 10px;
+  max-width: 900px;
+  height: 500px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Logo Section - Left side */
-.logo_1-1-FG3P4s {
-  max-width: 60%;
-  max-height: 60vh;
-  object-fit: contain;
-  position: absolute;
-  left: 10%;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1;
+.logo-side {
+  flex: 1;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
-/* Black Background - Right side */
-.rectangle-1-FG3P4s {
-  background-color: #000000;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 50%;
-  height: 100%;
+.logo {
+  min-width: 80%;
+  max-width: 80%;
 }
 
-/* Title */
-.title-FG3P4s {
-  position: absolute;
-  top: 25%;
-  right: 10%;
-  width: 30%;
-  color: #ffffff;
-  font-size: 48px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-/* Login Link text */
-.sudah-punya-akun-log-in-FG3P4s {
-  position: absolute;
-  top: 35%;
-  right: 10%;
-  width: 30%;
-  color: #918e9c;
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.sudah-punya-akun-log-in-FG3P4s a {
-  color: #3181c6;
-  text-decoration: none;
-  transition: color 0.3s;
-}
-
-/* Hide placeholder containers */
-.rectangle-5-FG3P4s,
-.rectangle-2-FG3P4s,
-.rectangle-3-FG3P4s {
-  display: none;
-}
-
-/* Form styling */
-form {
-  position: absolute;
+.form-side {
+  flex: 1;
+  background-color: #171717;
+  color: white;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  width: 30%;
-  right: 10%;
-  top: 45%;
+  justify-content: center;
+  padding: 40px;
 }
 
-/* Input fields */
-.nama-FG3P4s,
-.email-FG3P4s,
-.password-FG3P4s {
+.form-container {
   width: 100%;
-  height: 60px;
-  background-color: #e0e0e0;
-  border: none;
-  border-radius: 10px;
-  padding: 0 20px;
-  font-family: "Poppins", sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  transition: box-shadow 0.3s;
 }
 
-.nama-FG3P4s:focus,
-.email-FG3P4s:focus,
-.password-FG3P4s:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #3181c6;
-}
-
-/* Input placeholders */
-.nama-FG3P4s::placeholder,
-.email-FG3P4s::placeholder,
-.password-FG3P4s::placeholder {
-  color: #757575;
-  opacity: 1;
-}
-
-/* Submit button */
-.rectangle-4-FG3P4s {
-  width: 100%;
-  height: 60px;
-  background-color: #3181c6;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
-  margin-top: 10px;
-}
-
-.rectangle-4-FG3P4s:hover {
-  background-color: #2671b6;
-  transform: translateY(-2px);
-}
-
-.rectangle-4-FG3P4s:active {
-  transform: translateY(0);
-}
-
-/* Button text */
-.create-account-FG3P4s {
-  font-family: "Poppins", sans-serif;
-  font-size: 24px;
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
   font-weight: 600;
-  color: #000000;
-  text-align: center;
+}
+
+.login-text {
+  color: #918e9c;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+}
+
+.login-text a {
+  color: #918e9c;
+  text-decoration: none;
+}
+
+.login-text a:hover {
+  color: #3181c6;
+}
+
+.input-field {
   width: 100%;
+  background-color: #e9e9e9;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 
-/* Responsive Styles */
-@media screen and (max-width: 1200px) {
-  .logo_1-1-FG3P4s {
-    width: 300px;
-  }
-
-  form {
-    width: 35%;
-    right: 7.5%;
-  }
-
-  .title-FG3P4s,
-  .sudah-punya-akun-log-in-FG3P4s {
-    width: 35%;
-    right: 7.5%;
-  }
+.password-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
 }
 
-@media screen and (max-width: 992px) {
-  .logo_1-1-FG3P4s {
-    width: 250px;
-  }
-
-  .title-FG3P4s {
-    font-size: 42px;
-  }
-
-  .create-account-FG3P4s {
-    font-size: 22px;
-  }
+.password-container .input-field {
+  margin-bottom: 0;
 }
 
-@media screen and (max-width: 768px) {
-  .register-page {
-    height: 100vh;
-    overflow-y: auto;
-  }
-
-  .logo_1-1-FG3P4s {
-    position: relative;
-    width: 220px;
-    margin: 40px auto;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-  }
-
-  .rectangle-1-FG3P4s {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    right: 0;
-  }
-
-  .title-FG3P4s {
-    position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    text-align: center;
-    margin: 20px auto;
-    font-size: 36px;
-  }
-
-  .sudah-punya-akun-log-in-FG3P4s {
-    position: relative;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    text-align: center;
-    margin: 10px auto 30px;
-  }
-
-  form {
-    position: relative;
-    width: 85%;
-    max-width: 400px;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    margin-bottom: 40px;
-  }
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #1a1a1a;
 }
 
-@media screen and (max-width: 576px) {
-  .logo_1-1-FG3P4s {
-    width: 180px;
-    margin: 30px auto;
-  }
-
-  .title-FG3P4s {
-    font-size: 32px;
-  }
-
-  .sudah-punya-akun-log-in-FG3P4s {
-    font-size: 16px;
-  }
-
-  .nama-FG3P4s,
-  .email-FG3P4s,
-  .password-FG3P4s,
-  .rectangle-4-FG3P4s {
-    height: 55px;
-  }
-
-  .create-account-FG3P4s {
-    font-size: 20px;
-  }
-
-  form {
-    width: 90%;
-    gap: 15px;
-  }
-}
-
-@media screen and (max-width: 400px) {
-  .title-FG3P4s {
-    font-size: 28px;
-  }
-
-  .nama-FG3P4s,
-  .email-FG3P4s,
-  .password-FG3P4s {
-    font-size: 16px;
-    height: 50px;
-  }
-
-  .rectangle-4-FG3P4s {
-    height: 50px;
-  }
-
-  .create-account-FG3P4s {
-    font-size: 18px;
-  }
-}
-
-.flash {
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  color: white;
+.register-button {
   font-weight: bold;
+  width: 100%;
+  background-color: #3181c6;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 15px;
 }
 
-.flash.error {
-  background-color: #f44336; /* Red for error */
+.register-button:hover {
+  background-color: #2176c7;
 }
 
-.flash.success {
-  background-color: #4CAF50; /* Green for success */
+@media (max-width: 768px) {
+  .register-container {
+    flex-direction: column;
+    height: auto;
+    width: 90%;
+  }
+
+  .logo-side {
+    padding: 30px;
+  }
+
+  .form-side {
+    padding: 30px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
 }

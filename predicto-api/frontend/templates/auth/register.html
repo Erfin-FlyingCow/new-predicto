@@ -1,82 +1,102 @@
-<!-- templates/register.html -->
 <!DOCTYPE html>
-<html>
+<html lang="id">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="shortcut icon"
-      type="image/png"
-      href="https://animaproject.s3.amazonaws.com/home/favicon.png"
-    />
-    <meta name="og:type" content="website" />
-    <meta name="twitter:card" content="photo" />
+    <title>Predicto - Register</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/register.css') }}"
+      href="{{url_for('static', filename='css/register.css')}}"
     />
   </head>
   <body>
-    <div class="container-center-horizontal">
-      <div class="register-page screen">
-        <a href="{{ url_for('home') }}">
-          <img
-            class="logo_1-1-FG3P4s"
-            src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
-            alt="Predicto Logo"
-          />
-        </a>
-        <div class="rectangle-1-FG3P4s">
-          {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-messages">
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-              {% endfor %}
+    <div class="register-container">
+      <div class="logo-side">
+        <img
+          src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+          alt="Predicto Logo"
+          class="logo"
+        />
+      </div>
+      <div class="form-side">
+        <div class="form-container">
+          <h1>Create an account</h1>
+          <p class="login-text">
+            Sudah punya akun? <a href="{{ url_for('login') }}">Login</a>
+          </p>
+
+          <form method="POST" action="{{ url_for('register') }}">
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              class="input-field"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              class="input-field"
+              required
+            />
+
+            <div class="password-container">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Password"
+                class="input-field"
+                required
+              />
+              <span class="toggle-password" onclick="togglePassword()">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                  ></path>
+                  <path
+                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                  ></path>
+                  <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </span>
             </div>
-          {% endif %}
-        {% endwith %}
 
+            <button type="submit" class="register-button">
+              Create account
+            </button>
+          </form>
         </div>
-
-        <form method="POST" action="{{ url_for('register') }}">
-          <div class="rectangle-5-FG3P4s"></div>
-          <input
-            type="text"
-            name="username"
-            class="nama-FG3P4s poppins-medium-black-27px"
-            placeholder="Username"
-            required
-          />
-
-          <div class="rectangle-2-FG3P4s"></div>
-          <input
-            type="email"
-            name="email"
-            class="email-FG3P4s poppins-medium-black-27px"
-            placeholder="Email"
-            required
-          />
-
-          <div class="rectangle-3-FG3P4s"></div>
-          <input
-            type="password"
-            name="password"
-            class="password-FG3P4s poppins-medium-black-27px"
-            placeholder="Password"
-            required
-          />
-
-          <button type="submit" class="rectangle-4-FG3P4s">
-            <div class="create-account-FG3P4s">Create account</div>
-          </button>
-        </form>
-
-        <h1 class="title-FG3P4s">Create an account</h1>
-        <p class="sudah-punya-akun-log-in-FG3P4s">
-          Sudah punya akun? <a href="{{ url_for('login') }}">Login</a>
-        </p>
       </div>
     </div>
+
+    <script>
+      function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const toggleIcon = document.querySelector(".toggle-password svg");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleIcon.innerHTML =
+            '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        } else {
+          passwordInput.type = "password";
+          toggleIcon.innerHTML =
+            '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        }
+      }
+    </script>
   </body>
 </html>

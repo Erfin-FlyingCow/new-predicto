@@ -199,11 +199,20 @@ input:focus {
   --white: #ffffff;
 
   --font-size-l: 32px;
-  --font-size-m: 18px;
+  --font-size-m: 24px;
+  --font-size-s: 18px;
 
   --font-family-poppins: "Poppins", Helvetica;
 }
 .poppins-semi-bold-black-18px {
+  color: var(--black);
+  font-family: var(--font-family-poppins);
+  font-size: var(--font-size-s);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.poppins-semi-bold-black-24px {
   color: var(--black);
   font-family: var(--font-family-poppins);
   font-size: var(--font-size-m);
@@ -214,208 +223,93 @@ input:focus {
 :root {
 }
 
-/* screen - dashboard-page */
+/* screen - dashboard-page-cadangan */
 
-.dashboard-page {
+.dashboard-page-cadangan {
   background-color: var(--white);
-  height: 1024px;
+  height: 1324px;
   overflow: hidden;
   overflow-x: hidden;
   position: relative;
   width: 1500px;
 }
 
-.dashboard-page .rectangle-6-rWtV9q {
+.dashboard-page-cadangan .rectangle-6-GxsVjJ {
   background-color: #f5f7fa;
-  height: 924px;
-  left: 254px;
+  height: 1224px;
+  left: 256px;
   position: absolute;
   top: 100px;
-  width: 1400px;
+  width: 1300px;
 }
 
-.dashboard-page .rectangle-13-rWtV9q {
+.dashboard-page-cadangan .rectangle-12-GxsVjJ {
   background-color: var(--white);
   border: 1px solid;
   border-color: var(--black);
-  border-radius: 20px;
-  height: 217px;
+  border-radius: 15px;
+  height: 350px;
   left: 292px;
   position: absolute;
-  top: 770px;
-  width: 1122px;
+  top: 953px;
+  width: 1180px;
 }
 
-.dashboard-page .solararrow-right-outline-rWtV9q {
-  background-color: transparent;
-  height: 57px;
-  left: 1368px;
-  position: absolute;
-  top: 770px;
-  width: 57px;
-}
-
-.dashboard-page .selengkapnya-rWtV9q {
+.dashboard-page-cadangan .tren-penjualan-bulanan-GxsVjJ {
   background-color: transparent;
   height: auto;
-  left: 1170px;
+  left: 292px;
   letter-spacing: 0px;
   line-height: normal;
   position: absolute;
   text-align: center;
-  top: 776px;
-  width: 263px;
+  top: 913px;
+  white-space: nowrap;
+  width: 295px;
 }
 
-.dashboard-page .tanggal-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 254px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 846px;
-  width: 263px;
-}
-
-.dashboard-page .jenis-prediksi-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 254px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 897px;
-  width: 263px;
-}
-
-.dashboard-page .riwayat-prediksi-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 254px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 777px;
-  width: 263px;
-}
-
-.dashboard-page .rectangle-11-rWtV9q {
+.dashboard-page-cadangan .rectangle-11-GxsVjJ {
   background-color: var(--white);
   border: 1px solid;
   border-color: var(--black);
-  border-radius: 20px;
-  height: 165px;
-  left: 1059px;
+  border-radius: 15px;
+  height: 350px;
+  left: 292px;
   position: absolute;
-  top: 355px;
-  width: 355px;
+  top: 553px;
+  width: 1180px;
 }
 
-.dashboard-page .i-phone-terlaris-rWtV9q {
+.dashboard-page-cadangan .tren-penjualan-mingguan-GxsVjJ {
   background-color: transparent;
   height: auto;
-  left: 1017px;
+  left: 292px;
   letter-spacing: 0px;
   line-height: normal;
   position: absolute;
   text-align: center;
-  top: 362px;
-  width: 263px;
+  top: 514px;
+  white-space: nowrap;
+  width: 317px;
 }
 
-.dashboard-page .rectangle-12-rWtV9q {
-  background-color: var(--white);
-  border: 1px solid;
-  border-color: var(--black);
-  border-radius: 20px;
-  height: 165px;
-  left: 1059px;
-  position: absolute;
-  top: 558px;
-  width: 355px;
+.dashboard-page-cadangan .vector-GxsVjJ {
+  top: 1277px;
 }
 
-.dashboard-page .insight-chatbot-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 1017px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 566px;
-  width: 263px;
-}
-
-.dashboard-page .rectangle-8-rWtV9q {
-  background-color: var(--white);
-  border: 1px solid;
-  border-color: var(--black);
-  border-radius: 20px;
-  height: 165px;
-  left: 676px;
-  position: absolute;
-  top: 143px;
-  width: 355px;
-}
-
-.dashboard-page .prediksi-mingguan-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 716px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 147px;
-  width: 263px;
-}
-
-.dashboard-page .rectangle-9-rWtV9q {
-  background-color: var(--white);
-  border: 1px solid;
-  border-color: var(--black);
-  border-radius: 20px;
-  height: 165px;
-  left: 1060px;
-  position: absolute;
-  top: 144px;
-  width: 355px;
-}
-
-.dashboard-page .prediksi-bulanan-rWtV9q {
-  background-color: transparent;
-  height: auto;
-  left: 1111px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 147px;
-  width: 263px;
-}
-
-.dashboard-page .vector-rWtV9q {
-  top: 972px;
-}
-
-.dashboard-page .vector-mf8xWQ {
+.dashboard-page-cadangan .vector-jc8j5L {
   top: 366px;
 }
 
-.dashboard-page .vector-WoSxvp {
+.dashboard-page-cadangan .vector-d31DCz {
   top: 310px;
 }
 
-.dashboard-page .vector-LL3oRX {
+.dashboard-page-cadangan .vector-qx9RTx {
   top: 254px;
 }
 
-.dashboard-page .title-rWtV9q {
+.dashboard-page-cadangan .title-GxsVjJ {
   background-color: transparent;
   color: var(--black);
   font-family: var(--font-family-poppins);
@@ -432,11 +326,11 @@ input:focus {
   width: 182px;
 }
 
-.dashboard-page .dashboard-rWtV9q {
+.dashboard-page-cadangan .dashboard-GxsVjJ {
   background-color: transparent;
   color: #3181c6;
   font-family: var(--font-family-poppins);
-  font-size: var(--font-size-m);
+  font-size: var(--font-size-s);
   font-style: normal;
   font-weight: 600;
   height: auto;
@@ -449,12 +343,11 @@ input:focus {
   width: 110px;
 }
 
-.dashboard-page .vector-xi2QS5 {
-  top: 143px;
-  color: #3181c6;
+.dashboard-page-cadangan .vector-k5wbSv {
+  top: 142px;
 }
 
-.dashboard-page .prediction-rWtV9q {
+.dashboard-page-cadangan .prediction-GxsVjJ {
   background-color: transparent;
   height: auto;
   left: 76px;
@@ -462,11 +355,11 @@ input:focus {
   line-height: normal;
   position: absolute;
   text-align: left;
-  top: 196px;
+  top: 198px;
   width: 110px;
 }
 
-.dashboard-page .history-prediction-rWtV9q {
+.dashboard-page-cadangan .history-prediction-GxsVjJ {
   background-color: transparent;
   height: auto;
   left: 76px;
@@ -474,11 +367,11 @@ input:focus {
   line-height: normal;
   position: absolute;
   text-align: left;
-  top: 252px;
+  top: 253px;
   width: 164px;
 }
 
-.dashboard-page .chatbot-rWtV9q {
+.dashboard-page-cadangan .chatbot-GxsVjJ {
   background-color: transparent;
   height: auto;
   left: 76px;
@@ -490,7 +383,7 @@ input:focus {
   width: 110px;
 }
 
-.dashboard-page .setting-rWtV9q {
+.dashboard-page-cadangan .setting-GxsVjJ {
   background-color: transparent;
   height: auto;
   left: 76px;
@@ -502,7 +395,7 @@ input:focus {
   width: 110px;
 }
 
-.dashboard-page .log-out-rWtV9q {
+.dashboard-page-cadangan .log-out-GxsVjJ {
   background-color: transparent;
   height: auto;
   left: 76px;
@@ -510,11 +403,11 @@ input:focus {
   line-height: normal;
   position: absolute;
   text-align: left;
-  top: 970px;
+  top: 1275px;
   width: 110px;
 }
 
-.dashboard-page .ellipse-1-rWtV9q {
+.dashboard-page-cadangan .ellipse-1-GxsVjJ {
   background-color: #d9d9d9;
   border: 1px solid;
   border-color: var(--black);
@@ -526,7 +419,7 @@ input:focus {
   width: 60px;
 }
 
-.dashboard-page .material-symbolsperson-rounded-rWtV9q {
+.dashboard-page-cadangan .material-symbolsperson-rounded-GxsVjJ {
   background-color: transparent;
   height: 45px;
   left: 1438px;
@@ -535,47 +428,36 @@ input:focus {
   width: 45px;
 }
 
-.dashboard-page .vector-Y67GAY {
+.dashboard-page-cadangan .vector-SlQiSv {
   top: 198px;
 }
 
-.dashboard-page .rectangle-7-rWtV9q {
+.dashboard-page-cadangan .rectangle-10-GxsVjJ {
   background-color: var(--white);
   border: 1px solid;
   border-color: var(--black);
-  border-radius: 20px;
-  height: 165px;
+  border-radius: 15px;
+  height: 350px;
   left: 292px;
   position: absolute;
-  top: 143px;
-  width: 355px;
+  top: 145px;
+  width: 1180px;
 }
 
-.dashboard-page .rectangle-10-rWtV9q {
-  background-color: var(--white);
-  border: 1px solid;
-  border-color: var(--black);
-  border-radius: 20px;
-  height: 368px;
-  left: 292px;
-  position: absolute;
-  top: 355px;
-  width: 733px;
-}
-
-.dashboard-page .tren-penjualan-rWtV9q {
+.dashboard-page-cadangan .tren-penjualan-harian-GxsVjJ {
   background-color: transparent;
   height: auto;
-  left: 254px;
+  left: 292px;
   letter-spacing: 0px;
   line-height: normal;
   position: absolute;
   text-align: center;
-  top: 362px;
-  width: 263px;
+  top: 107px;
+  white-space: nowrap;
+  width: 275px;
 }
 
-.dashboard-page .logo_1-removebg-preview-1-1-rWtV9q {
+.dashboard-page-cadangan .logo_1-removebg-preview-1-1-GxsVjJ {
   background-color: transparent;
   height: 180px;
   left: 35px;
@@ -585,19 +467,7 @@ input:focus {
   width: 180px;
 }
 
-.dashboard-page .prediksi-besok {
-  background-color: transparent;
-  height: auto;
-  left: 338px;
-  letter-spacing: 0px;
-  line-height: normal;
-  position: absolute;
-  text-align: center;
-  top: 147px;
-  width: 263px;
-}
-
-.dashboard-page .vector {
+.dashboard-page-cadangan .vector {
   background-color: transparent;
   height: 25px;
   left: 35px;

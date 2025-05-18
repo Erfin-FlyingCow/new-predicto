@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot - Predicto</title>
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{{ url_for('static', filename='favicon.png') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
+    />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='css/chatbot.css')}}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
+        </div>
+
+        <!-- Mobile Nav Toggle -->
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
+
+        <nav class="nav-menu">
+          <ul>
+            <li>
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li class="active">
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main-content">
+        <header class="top-header">
+          <h1>Chatbot</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
+              </div>
+            </a>
+          </div>
+        </header>
+
+        <div class="content-wrapper">
+          <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+              <!-- Messages will be added here -->
+              <div class="message bot-message">
+                Halo! Saya adalah asisten Predicto. Apa yang bisa saya bantu
+                hari ini?
+              </div>
+              <div class="typing-indicator" id="typing-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+            </div>
+            <div class="chat-input-container">
+              <input
+                type="text"
+                class="chat-input"
+                id="chat-input"
+                placeholder="Silahkan ajukan pertanyaan Anda..."
+              />
+              <button class="send-button" id="send-button">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const chatInput = document.getElementById("chat-input");
+        const sendButton = document.getElementById("send-button");
+        const chatMessages = document.getElementById("chat-messages");
+        const typingIndicator = document.getElementById("typing-indicator");
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
+
+        // Get API URL from Flask backend
+        const API_URL = "{{ url_for('api_chatbot', _external=True) }}";
+
+        // Debug logging
+        console.log("Using API URL:", API_URL);
+
+        // Function to format currency values
+        function formatCurrency(value) {
+          return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(value);
+        }
+
+        // Function to format predictions as a table
+        function formatPredictions(data) {
+          if (
+            !data ||
+            !data.response ||
+            !Array.isArray(data.response) ||
+            !data.type
+          ) {
+            return "Maaf, data prediksi tidak tersedia.";
+          }
+
+          const type = data.type; // daily, weekly, monthly
+          let timeLabel;
+
+          switch (type) {
+            case "daily":
+              timeLabel = "Tanggal";
+              break;
+            case "weekly":
+              timeLabel = "Minggu";
+              break;
+            case "monthly":
+              timeLabel = "Bulan";
+              break;
+            default:
+              timeLabel = "Periode";
+          }
+
+          let table = `<div><strong>Prediksi ${
+            type === "daily"
+              ? "Harian"
+              : type === "weekly"
+              ? "Mingguan"
+              : "Bulanan"
+          }</strong></div>`;
+
+          // Tambahkan div dengan class table-responsive untuk pembungkus tabel
+          table += `<div class="table-responsive">
+              <table class="prediction-table">
+                <tr>
+                  <th>${timeLabel}</th>
+                  <th>Prediksi</th>
+                  <th>Margin</th>
+                </tr>`;
+
+          data.response.forEach((item) => {
+            // Format date/week/month based on type
+            let formattedTime;
+            const dateValue = item.week || item.month || item.date || "-";
+
+            if (dateValue !== "-") {
+              try {
+                const date = new Date(dateValue);
+                formattedTime = `${String(date.getDate()).padStart(
+                  2,
+                  "0"
+                )}/${String(date.getMonth() + 1).padStart(
+                  2,
+                  "0"
+                )}/${date.getFullYear()}`;
+              } catch (e) {
+                formattedTime = dateValue;
+              }
+            } else {
+              formattedTime = dateValue;
+            }
+
+            table += `<tr>
+                <td>${formattedTime}</td>
+                <td>${formatCurrency(item.prediction)}</td>
+                <td>${formatCurrency(item.margin)}</td>
+              </tr>`;
+          });
+
+          table += `</table>
+          </div>`;
+          return table;
+        }
+
+        // Hamburger menu toggle
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
+
+          // Change icon based on state
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Close mobile menu when clicking on a menu item
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        // Adjust menu on window resize
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove("expanded");
+            const icon = navToggle.querySelector("i");
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Function to add message to the chat UI
+        function addMessageToChat(message, isUser) {
+          const messageDiv = document.createElement("div");
+          messageDiv.classList.add("message");
+          messageDiv.classList.add(isUser ? "user-message" : "bot-message");
+
+          // Check if the message is an HTML string (for tables)
+          if (
+            (typeof message === "string" && message.startsWith("<div>")) ||
+            message.startsWith("<table>")
+          ) {
+            messageDiv.innerHTML = message;
+          } else {
+            messageDiv.textContent = message;
+          }
+
+          // Insert before typing indicator
+          chatMessages.insertBefore(messageDiv, typingIndicator);
+
+          // Scroll to the bottom of the chat
+          scrollToBottom();
+        }
+
+        // Function to show the typing indicator
+        function showTypingIndicator() {
+          typingIndicator.style.display = "block";
+          scrollToBottom();
+        }
+
+        // Function to hide the typing indicator
+        function hideTypingIndicator() {
+          typingIndicator.style.display = "none";
+        }
+
+        // Function to scroll to bottom of chat
+        function scrollToBottom() {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to send message to the API
+        async function sendMessage(message) {
+          try {
+            showTypingIndicator();
+
+            // Get token from session
+            const token = "{{ session.get('access_token', '') }}";
+            console.log("Token available:", !!token);
+
+            console.log("Sending to API:", {
+              message: message,
+            });
+
+            // Send to API endpoint
+            const response = await fetch(API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer {{ session.get('access_token', '') }}`,
+              },
+              body: JSON.stringify({
+                message: message,
+              }),
+              // Add credentials to ensure cookies are sent
+              credentials: "same-origin",
+            });
+
+            console.log("Response status:", response.status);
+
+            hideTypingIndicator();
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log("API response:", data);
+
+            if (data) {
+              // Check if this is a prediction result (has a type and response array)
+              if (data.type && data.response && Array.isArray(data.response)) {
+                // Format the prediction data as a table
+                const formattedMessage = formatPredictions(data);
+                addMessageToChat(formattedMessage, false);
+              }
+              // Regular text response
+              else if (data.response && typeof data.response === "string") {
+                addMessageToChat(data.response, false);
+              }
+              // Fallback for other response formats
+              else {
+                addMessageToChat(
+                  "Maaf, saya tidak dapat memproses pesan Anda saat ini.",
+                  false
+                );
+              }
+            } else {
+              addMessageToChat(
+                "Maaf, saya tidak dapat memproses pesan Anda saat ini.",
+                false
+              );
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            hideTypingIndicator();
+            addMessageToChat(
+              "Terjadi kesalahan saat menghubungi server. Silakan coba lagi nanti.",
+              false
+            );
+          }
+        }
+
+        // Send message when pressing Enter
+        chatInput.addEventListener("keypress", function (e) {
+          if (e.key === "Enter" && chatInput.value.trim() !== "") {
+            const message = chatInput.value.trim();
+            addMessageToChat(message, true);
+            chatInput.value = "";
+            sendMessage(message);
+          }
+        });
+
+        // Send message when clicking send button
+        sendButton.addEventListener("click", function () {
+          if (chatInput.value.trim() !== "") {
+            const message = chatInput.value.trim();
+            addMessageToChat(message, true);
+            chatInput.value = "";
+            sendMessage(message);
+          }
+        });
+
+        // Initial scroll to bottom
+        scrollToBottom();
+      });
+    </script>
+  </body>
+</html>

@@ -202,4 +202,3 @@ def logout():
     db.session.add(TokenBlacklist(jti=jti))
     db.session.commit()
     return jsonify({"message": "Logout successful"}), 200
-

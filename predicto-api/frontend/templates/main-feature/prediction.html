@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prediction Page - Predicto</title>
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{{ url_for('static', filename='favicon.png') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/prediction.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
+        </div>
+
+        <!-- Mobile Nav Toggle -->
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
+
+        <nav class="nav-menu">
+          <ul>
+            <li>
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li class="active">
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main-content">
+        <header class="top-header">
+          <h1>Prediction</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
+              </div>
+            </a>
+          </div>
+        </header>
+
+        <div class="content-wrapper">
+          <section class="prediction-section">
+            <div class="prediction-settings-card">
+              <h2>Pilih Rentang Waktu</h2>
+
+              <div class="prediction-controls">
+                <div class="select-wrapper">
+                  <select id="prediction-period" class="prediction-dropdown">
+                    <option value="daily">Prediksi Harian</option>
+                    <option value="weekly">Prediksi Mingguan</option>
+                    <option value="monthly">Prediksi Bulanan</option>
+                  </select>
+                  <div class="select-arrow">
+                    <i class="fas fa-chevron-down"></i>
+                  </div>
+                </div>
+
+                <button id="predict-button" class="prediction-button">
+                  Prediksi
+                </button>
+                <button id="save-button" class="save-button">Simpan</button>
+              </div>
+            </div>
+
+            <div class="prediction-results-card">
+              <h2>Hasil Prediksi</h2>
+
+              <div id="loading" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>Memuat data prediksi...</p>
+              </div>
+
+              <div id="prediction-table-container" class="table-responsive">
+                <table id="prediction-table" class="prediction-table">
+                  <thead>
+                    <tr id="table-header">
+                      <!-- Header will be filled by JavaScript -->
+                    </tr>
+                  </thead>
+                  <tbody id="table-body">
+                    <!-- Data will be filled by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="error-message" class="error-message">
+                Gagal memuat data prediksi. Silakan coba lagi.
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const periodSelect = document.getElementById("prediction-period");
+        const predictButton = document.getElementById("predict-button");
+        const saveButton = document.getElementById("save-button");
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
+
+        // Hamburger menu toggle
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
+
+          // Change icon based on state
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Close mobile menu when clicking on a menu item
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        // Adjust menu on window resize
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove("expanded");
+            const icon = navToggle.querySelector("i");
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Tampilkan keadaan awal tabel sebagai pengganti memuat data otomatis
+        showInitialTableState();
+
+        // Event listeners
+        periodSelect.addEventListener("change", function () {
+          // Clear previous results when changing period
+          document.getElementById("table-header").innerHTML = "";
+          document.getElementById("table-body").innerHTML = "";
+          showInitialTableState();
+        });
+
+        predictButton.addEventListener("click", function () {
+          const selectedPeriod = periodSelect.value;
+          loadPredictionData(selectedPeriod);
+        });
+
+        saveButton.addEventListener("click", function () {
+          savePrediction();
+        });
+      });
+
+      function showInitialTableState() {
+        const tableHeader = document.getElementById("table-header");
+        const tableBody = document.getElementById("table-body");
+        const loadingElement = document.getElementById("loading");
+        const tableContainer = document.getElementById(
+          "prediction-table-container"
+        );
+        const errorElement = document.getElementById("error-message");
+
+        // Sembunyikan loading dan error
+        loadingElement.style.display = "none";
+        errorElement.style.display = "none";
+
+        // Tampilkan tabel
+        tableContainer.style.display = "block";
+
+        // Buat header default
+        tableHeader.innerHTML = `
+    <th>Tanggal</th>
+    <th>Prediksi Penjualan (Rp)</th>
+    <th>Lower Bound (Rp)</th>
+    <th>Upper Bound (Rp)</th>
+  `;
+
+        // Tampilkan pesan instruksi
+        tableBody.innerHTML = `
+    <tr>
+      <td colspan="4" style="text-align: center;">
+        <i class="fas fa-info-circle"></i> 
+        Pilih rentang waktu prediksi dan klik tombol "Prediksi" untuk melihat hasil
+      </td>
+    </tr>
+  `;
+      }
+
+      function loadPredictionData(period) {
+        const loadingElement = document.getElementById("loading");
+        const tableContainer = document.getElementById(
+          "prediction-table-container"
+        );
+        const errorElement = document.getElementById("error-message");
+
+        // Show loading, hide table and error
+        loadingElement.style.display = "flex";
+        tableContainer.style.display = "none";
+        errorElement.style.display = "none";
+
+        // Fetch data from API
+        fetch(`/api/ml/predict?period=${period}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data.error) {
+              throw new Error(data.error);
+            }
+
+            // Check for different response structures and extract prediction data
+            let predictions = [];
+            if (data.predictions) {
+              predictions = data.predictions;
+            } else if (Array.isArray(data)) {
+              predictions = data;
+            } else if (data.data && Array.isArray(data.data)) {
+              predictions = data.data;
+            }
+
+            renderPredictionTable(predictions, period);
+          })
+          .catch((error) => {
+            console.error("Error fetching prediction data:", error);
+            loadingElement.style.display = "none";
+            errorElement.style.display = "block";
+            errorElement.textContent = `Gagal memuat data prediksi: ${error.message}`;
+          });
+      }
+
+      function renderPredictionTable(data, period) {
+        const tableHeader = document.getElementById("table-header");
+        const tableBody = document.getElementById("table-body");
+        const loadingElement = document.getElementById("loading");
+        const tableContainer = document.getElementById(
+          "prediction-table-container"
+        );
+
+        // Clear table
+        tableHeader.innerHTML = "";
+        tableBody.innerHTML = "";
+
+        // Create headers based on period
+        let headers = [];
+
+        if (period === "daily") {
+          headers = [
+            "Tanggal",
+            "Prediksi Penjualan (Rp)",
+            "Lower Bound (Rp)",
+            "Upper Bound (Rp)",
+          ];
+        } else if (period === "weekly") {
+          headers = [
+            "Minggu",
+            "Prediksi Penjualan (Rp)",
+            "Lower Bound (Rp)",
+            "Upper Bound (Rp)",
+          ];
+        } else if (period === "monthly") {
+          headers = [
+            "Bulan",
+            "Prediksi Penjualan (Rp)",
+            "Lower Bound (Rp)",
+            "Upper Bound (Rp)",
+          ];
+        }
+
+        // Fill header
+        headers.forEach((headerText) => {
+          const th = document.createElement("th");
+          th.textContent = headerText;
+          tableHeader.appendChild(th);
+        });
+
+        // Handle empty data
+        if (!data || data.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = headers.length;
+          cell.textContent = "Tidak ada data prediksi tersedia";
+          cell.style.textAlign = "center";
+          row.appendChild(cell);
+          tableBody.appendChild(row);
+        } else {
+          // Fill body based on period type
+          data.forEach((item) => {
+            const row = document.createElement("tr");
+
+            if (period === "daily") {
+              // Handle daily prediction with 4 columns
+              const date = item.date || "";
+              const prediction = item.prediction || 0;
+              const lowerBound = item.lower_bound || 0;
+              const upperBound = item.upper_bound || 0;
+
+              row.innerHTML = `
+        <td>${formatDate(date)}</td>
+        <td>${formatCurrency(prediction)}</td>
+        <td>${formatCurrency(lowerBound)}</td>
+        <td>${formatCurrency(upperBound)}</td>
+      `;
+            } else if (period === "weekly") {
+              // Handle weekly prediction with 4 columns
+              const week = item.week || item.date || "";
+              const prediction = item.prediction || 0;
+              const lowerBound = item.lower_bound || 0;
+              const upperBound = item.upper_bound || 0;
+
+              row.innerHTML = `
+        <td>${formatWeek(week)}</td>
+        <td>${formatCurrency(prediction)}</td>
+        <td>${formatCurrency(lowerBound)}</td>
+        <td>${formatCurrency(upperBound)}</td>
+      `;
+            } else if (period === "monthly") {
+              // Handle monthly prediction with 4 columns
+              const month = item.month || item.date || "";
+              const prediction = item.prediction || 0;
+              const lowerBound = item.lower_bound || 0;
+              const upperBound = item.upper_bound || 0;
+
+              row.innerHTML = `
+        <td>${formatMonth(month)}</td>
+        <td>${formatCurrency(prediction)}</td>
+        <td>${formatCurrency(lowerBound)}</td>
+        <td>${formatCurrency(upperBound)}</td>
+      `;
+            }
+
+            tableBody.appendChild(row);
+          });
+        }
+
+        // Hide loading, show table
+        loadingElement.style.display = "none";
+        tableContainer.style.display = "block";
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
+        const options = { year: "numeric", month: "numeric", day: "numeric" };
+        return new Date(dateString).toLocaleDateString("id-ID", options);
+      }
+
+      function formatWeek(weekString) {
+        if (!weekString) return "N/A";
+        // If it's already in week format, return as is
+        if (typeof weekString === "string" && weekString.includes("Minggu")) {
+          return weekString;
+        }
+        // Format as simple date without range
+        try {
+          const date = new Date(weekString);
+          return `${date.getDate()}/${
+            date.getMonth() + 1
+          }/${date.getFullYear()}`;
+        } catch (e) {
+          return weekString;
+        }
+      }
+
+      function formatMonth(monthString) {
+        if (!monthString) return "N/A";
+        // If it's already in month format, return as is
+        if (typeof monthString === "string" && monthString.length <= 10) {
+          try {
+            const date = new Date(monthString);
+            // Format as DD/MM/YYYY
+            return `${String(date.getDate()).padStart(2, "0")}/${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}/${date.getFullYear()}`;
+          } catch (e) {
+            return monthString;
+          }
+        }
+        // Otherwise format as month name
+        try {
+          const date = new Date(monthString);
+          return `${String(date.getDate()).padStart(2, "0")}/${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}/${date.getFullYear()}`;
+        } catch (e) {
+          return monthString;
+        }
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(value);
+      }
+
+      function savePrediction() {
+        // Get the current prediction data from the table
+        const predictionTable = document.getElementById("prediction-table");
+        const periodSelect = document.getElementById("prediction-period");
+        const selectedPeriod = periodSelect.value;
+
+        // Check if we have prediction data to save
+        if (
+          !predictionTable ||
+          !predictionTable.rows ||
+          predictionTable.rows.length <= 1
+        ) {
+          // Show error notification
+          showNotification("Tidak ada data prediksi untuk disimpan", "error");
+          return;
+        }
+
+        // Check if the first row contains an instruction message
+        const firstDataRow = predictionTable.rows[1];
+        if (
+          firstDataRow.cells.length === 1 &&
+          firstDataRow.cells[0].colSpan > 1
+        ) {
+          showNotification("Silakan lakukan prediksi terlebih dahulu", "error");
+          return;
+        }
+
+        // Collect prediction data from the table
+        const predictions = [];
+        for (let i = 1; i < predictionTable.rows.length; i++) {
+          const row = predictionTable.rows[i];
+
+          // Skip instruction row if present
+          if (row.cells.length === 1 && row.cells[0].colSpan > 1) {
+            continue;
+          }
+
+          // Extract data based on period type
+          let prediction = {};
+
+          if (selectedPeriod === "daily") {
+            // For daily prediction
+            prediction = {
+              date: parseDateValue(row.cells[0].textContent),
+              prediction: parseCurrencyValue(row.cells[1].textContent),
+              lower_bound: parseCurrencyValue(row.cells[2].textContent),
+              upper_bound: parseCurrencyValue(row.cells[3].textContent),
+            };
+          } else if (selectedPeriod === "weekly") {
+            // For weekly prediction
+            prediction = {
+              date: parseDateValue(row.cells[0].textContent), // Use date as the key instead of week
+              prediction: parseCurrencyValue(row.cells[1].textContent),
+              lower_bound: parseCurrencyValue(row.cells[2].textContent),
+              upper_bound: parseCurrencyValue(row.cells[3].textContent),
+            };
+          } else if (selectedPeriod === "monthly") {
+            // For monthly prediction
+            prediction = {
+              date: parseDateValue(row.cells[0].textContent), // Use date as the key instead of month
+              prediction: parseCurrencyValue(row.cells[1].textContent),
+              lower_bound: parseCurrencyValue(row.cells[2].textContent),
+              upper_bound: parseCurrencyValue(row.cells[3].textContent),
+            };
+          }
+
+          predictions.push(prediction);
+        }
+
+        // Convert frequency format
+        const frequencyMap = {
+          daily: "D",
+          weekly: "W",
+          monthly: "ME",
+        };
+
+        const frequency = frequencyMap[selectedPeriod];
+
+        // Prepare data to send to API - match the expected format
+        const requestData = {
+          frequency: frequency,
+          data: predictions,
+        };
+
+        // Show loading notification
+        showNotification("Menyimpan prediksi...", "loading");
+
+        // Send data to API
+        fetch("/api/ml/predict/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Show success notification
+            showNotification("Prediksi berhasil disimpan!", "success");
+          })
+          .catch((error) => {
+            console.error("Error saving prediction:", error);
+            // Show error notification
+            showNotification(
+              `Gagal menyimpan prediksi: ${error.message}`,
+              "error"
+            );
+          });
+      }
+
+      // Helper function to parse date values
+      function parseDateValue(dateText) {
+        // Try to convert back to API format (YYYY-MM-DD)
+        try {
+          if (dateText === "N/A") return "";
+
+          // Parse Indonesian date format (DD/MM/YYYY)
+          const parts = dateText.split("/");
+          if (parts.length === 3) {
+            return `${parts[2]}-${parts[1].padStart(
+              2,
+              "0"
+            )}-${parts[0].padStart(2, "0")}`;
+          }
+
+          return dateText;
+        } catch (e) {
+          return dateText;
+        }
+      }
+
+      // Helper function to parse currency values
+      function parseCurrencyValue(currencyText) {
+        // Remove currency symbol and separators, convert to number
+        try {
+          return parseFloat(
+            currencyText.replace(/[^\d,-]/g, "").replace(",", ".")
+          );
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      // Function to show notifications with different styles
+      function showNotification(message, type = "success") {
+        // Remove existing notifications
+        const existingNotifications =
+          document.querySelectorAll(".notification");
+        existingNotifications.forEach((notification) => {
+          notification.classList.add("notification-hide");
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        });
+
+        // Create new notification
+        const notification = document.createElement("div");
+        notification.className = "notification";
+
+        // Set styles based on notification type
+        if (type === "error") {
+          notification.style.backgroundColor = "#f44336";
+        } else if (type === "loading") {
+          notification.style.backgroundColor = "#2196f3";
+        } else {
+          notification.style.backgroundColor = "#4caf50"; // success
+        }
+
+        // Set notification icon
+        let icon = "check-circle";
+        if (type === "error") {
+          icon = "exclamation-circle";
+        } else if (type === "loading") {
+          icon = "spinner fa-spin";
+        }
+
+        notification.innerHTML = `
+    <i class="fas fa-${icon}"></i>
+    <span>${message}</span>
+  `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 3 seconds for success and error notifications
+        if (type !== "loading") {
+          setTimeout(() => {
+            notification.classList.add("notification-hide");
+            setTimeout(() => {
+              if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+              }
+            }, 300);
+          }, 3000);
+        }
+
+        return notification;
+      }
+    </script>
+  </body>
+</html>

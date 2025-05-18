@@ -1,78 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=1440, maximum-scale=1.0" />
-    <link
-      rel="shortcut icon"
-      type="image/png"
-      href="https://animaproject.s3.amazonaws.com/home/favicon.png"
-    />
-    <meta name="og:type" content="website" />
-    <meta name="twitter:card" content="photo" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predicto - Login</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/login.css') }}"
     />
-    <link
-      href="https://fonts.googleapis.com/css?family=Poppins:500,600"
-      rel="stylesheet"
-    />
-    <title>Login Page</title>
   </head>
   <body>
-    <div class="container-center-horizontal">
-      <div class="login-page screen">
-        <a href="{{ url_for('home') }}">
-          <img
-            class="logo_1-1-fmx5hU"
-            src="{{ url_for('static', filename='assets/logo-predicto.png') }}"
-            alt="logo_1 1"
-          />
-        </a>        
-        <div class="rectangle-1-fmx5hU">{% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-messages">
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-    </div>
+    <div class="login-container">
+      <div class="logo-section">
+        <img
+          src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+          alt="Predicto Logo"
+        />
+      </div>
+      <div class="form-section">
+        <h1>Welcome back!</h1>
+        <p class="register-text">
+          Belum punya akun?
+          <a href="{{url_for('register')}}" class="register-link">Register</a>
+        </p>
 
-        <form method="POST" action="{{ url_for('login') }}">
-          <h1 class="title-fmx5hU">Welcome Back!</h1>
-          <div class="belum-punya-akun-register-fmx5hU">
-            Belum punya akun? <a href="{{ url_for('register') }}">Register</a>
+        <form action="{{ url_for('login') }}" method="POST">
+          <div class="form-group">
+            <input
+              type="text"
+              name="username"
+              class="form-control"
+              placeholder="Username"
+              required
+            />
           </div>
-
-          <div class="rectangle-2-fmx5hU"></div>
-          <input
-            type="text"
-            name="username"
-            class="email-input"
-            placeholder="Username"
-            required
-          />
-
-          <div class="rectangle-3-fmx5hU"></div>
-          <input
-            type="password"
-            name="password"
-            class="password-input"
-            placeholder="Password"
-            required
-          />
-
-          <a href="{{ url_for('lupa_password') }}" class="lupa-paswword-fmx5hU"
-            >Lupa Password?</a>
-
-          <button type="submit" class="rectangle-4-fmx5hU">
-            <div class="login-fmx5hU">Login</div>
-          </button>
+          <div class="form-group">
+            <div class="password-container">
+              <input
+                type="password"
+                name="password"
+                id="password"
+                class="form-control"
+                placeholder="Password"
+                required
+              />
+              <span class="toggle-password" onclick="togglePassword()">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                  ></path>
+                  <path
+                    d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                  ></path>
+                  <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="forgot-password">
+            <a href="{{url_for('lupa_password')}}">Lupa Password?</a>
+          </div>
+          <button type="submit" class="login-btn">Login</button>
         </form>
       </div>
     </div>
+
+    <script>
+      function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const toggleIcon = document.querySelector(".toggle-password svg");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleIcon.innerHTML =
+            '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        } else {
+          passwordInput.type = "password";
+          toggleIcon.innerHTML =
+            '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        }
+      }
+    </script>
   </body>
 </html>

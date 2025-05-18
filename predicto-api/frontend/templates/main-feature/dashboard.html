@@ -1,147 +1,1029 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=1440, maximum-scale=1.0" />
-    <title>Dashboard - Sales Prediction</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Predicto</title>
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css"
+      rel="shortcut icon"
+      type="image/png"
+      href="{{ url_for('static', filename='favicon.png') }}"
     />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Poppins:500,600"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/dashboard.css') }}"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
     />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+      /* General Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background-color: #f5f8fa;
+        color: #333;
+        min-height: 100vh;
+      }
+
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar Styles */
+      .sidebar {
+        width: 250px;
+        background-color: #ffffff;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        z-index: 10;
+        transition: all 0.3s ease;
+      }
+
+      .logo {
+        padding: 20px;
+        text-align: center;
+      }
+
+      .logo img {
+        max-width: 150px;
+        height: auto;
+      }
+
+      .nav-menu {
+        flex: 1;
+      }
+
+      .nav-menu ul {
+        list-style: none;
+      }
+
+      .nav-menu ul li {
+        margin-bottom: 5px;
+      }
+
+      .nav-menu ul li a {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .nav-menu ul li a i {
+        margin-right: 12px;
+        font-size: 18px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .nav-menu ul li a:hover {
+        background-color: #f0f7ff;
+        color: #2196f3;
+      }
+
+      .nav-menu ul li.active a {
+        background-color: #e6f3ff;
+        color: #2196f3;
+        border-left: 4px solid #2196f3;
+      }
+
+      .logout {
+        padding: 20px;
+      }
+
+      .logout a {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: #f44336;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+      }
+
+      .logout a i {
+        margin-right: 12px;
+        font-size: 18px;
+      }
+
+      .logout a:hover {
+        background-color: #ffebee;
+      }
+
+      /* Mobile Nav Toggle */
+      .nav-toggle {
+        display: none;
+        cursor: pointer;
+        font-size: 24px;
+        color: #333;
+      }
+
+      /* Main Content Styles */
+      .main-content {
+        flex: 1;
+        margin-left: 250px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Fixed Header */
+      .top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 23.5px;
+        background-color: #ffffff;
+        position: sticky;
+        top: 0;
+        z-index: 9999;
+      }
+
+      .top-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+      }
+
+      .profile-circle {
+        width: 40px;
+        height: 40px;
+        background-color: #e0e0e0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .profile-circle:hover {
+        background-color: #d0d0d0;
+      }
+
+      .profile-circle i {
+        font-size: 18px;
+        color: #666;
+      }
+
+      /* Content */
+      .content-wrapper {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      /* Dashboard Cards */
+      .prediction-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .prediction-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+      }
+
+      .prediction-card h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+
+      /* History Section */
+      .history-section {
+        margin-top: 24px;
+      }
+
+      .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .history-header h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .view-all {
+        color: #2196f3;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .view-all i {
+        margin-left: 8px;
+      }
+
+      .view-all:hover {
+        color: #0d8bf2;
+      }
+
+      .history-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+      }
+
+      /* Table Styling */
+      .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+      }
+
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .history-table th,
+      .history-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+      }
+
+      .history-table th {
+        background-color: #f5f8fa;
+        font-weight: 600;
+        color: #666;
+      }
+
+      .history-table tr:hover {
+        background-color: #f9fafb;
+      }
+
+      .history-table td {
+        color: #333;
+      }
+
+      .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #e3f2fd;
+        color: #2196f3;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .action-btn:hover {
+        background-color: #bbdefb;
+      }
+
+      /* Responsive Design */
+      @media (min-width: 768px) {
+        .prediction-cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .prediction-cards {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .sidebar {
+          width: 200px;
+        }
+
+        .main-content {
+          margin-left: 200px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .top-header {
+          background-color: transparent;
+          box-shadow: none;
+        }
+
+        .container {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          height: 70px;
+          position: fixed;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 20px;
+          overflow: hidden;
+          z-index: 20;
+        }
+
+        .sidebar.expanded {
+          height: 100vh;
+          overflow-y: auto;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: flex-start;
+        }
+
+        .logo {
+          padding: 10px;
+        }
+
+        .logo img {
+          max-width: 100px;
+        }
+
+        .nav-toggle {
+          display: block;
+        }
+
+        .nav-menu {
+          display: none;
+          width: 100%;
+          margin-top: 20px;
+        }
+
+        .sidebar.expanded .nav-menu {
+          display: block;
+        }
+
+        .logout {
+          display: none;
+        }
+
+        .sidebar.expanded .logout {
+          display: block;
+          margin-top: auto;
+        }
+
+        .main-content {
+          margin-left: 0;
+          margin-top: 70px;
+          z-index: 1;
+        }
+
+        .prediction-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .top-header {
+          flex-direction: row;
+          align-items: center;
+          background-color: transparent; /* Make mobile navbar transparent */
+          box-shadow: none;
+        }
+
+        .top-header h1 {
+          font-size: 24px;
+        }
+
+        .history-table th,
+        .history-table td {
+          padding: 8px;
+          font-size: 12px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="container-center-horizontal">
-      <div class="dashboard-page screen">
-        <!-- Main background -->
-        <div class="rectangle-6-rWtV9q"></div>
-
-        <!-- Logo section -->
-        <img
-          class="logo_1-removebg-preview-1-1-rWtV9q"
-          src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
-          alt="Logo"
-        />
-        <h1 class="title-rWtV9q">Dashboard</h1>
-
-        <!-- Profile section -->
-        <div class="ellipse-1-rWtV9q"></div>
-        <img
-          class="material-symbolsperson-rounded-rWtV9q"
-          src="{{ url_for('static', filename='assets/person.svg') }}"
-          alt="Profile"
-        />
-
-        <!-- Sidebar navigation -->
-        <div class="dashboard-rWtV9q">Dashboard</div>
-        <img
-          class="vector-xi2QS5 vector"
-          src="{{ url_for('static', filename='assets/dashboard.svg') }}"
-          alt="Vector"
-        />
-
-        <div class="prediction-rWtV9q poppins-semi-bold-black-18px">
-          Prediction
-        </div>
-        <img
-          class="vector-Y67GAY vector"
-          src="{{ url_for('static', filename='assets/prediction.svg') }}"
-          alt="Vector"
-        />
-
-        <div class="history-prediction-rWtV9q poppins-semi-bold-black-18px">
-          History Prediction
-        </div>
-        <img
-          class="vector-LL3oRX vector"
-          src="{{ url_for('static', filename='assets/history.svg') }}"
-          alt="Vector"
-        />
-
-        <div class="chatbot-rWtV9q poppins-semi-bold-black-18px">Chatbot</div>
-        <img
-          class="vector-WoSxvp vector"
-          src="{{ url_for('static', filename='assets/chatbot.svg') }}"
-          alt="Vector"
-        />
-
-        <div class="setting-rWtV9q poppins-semi-bold-black-18px">Setting</div>
-        <img
-          class="vector-mf8xWQ vector"
-          src="{{ url_for('static', filename='assets/settings.svg') }}"
-          alt="Vector"
-        />
-
-        <div class="log-out-rWtV9q poppins-semi-bold-black-18px">Log out</div>
-        <img
-          class="vector-rWtV9q vector"
-          src="{{ url_for('static', filename='assets/logout.svg') }}"
-          alt="Vector"
-        />
-
-        <!-- Prediction Boxes - Top Row -->
-        <!-- 1. Tomorrow's Prediction -->
-        <div class="rectangle-7-rWtV9q"></div>
-        <div class="prediksi-besok poppins-semi-bold-black-18px">
-          Prediksi Besok
+    <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
         </div>
 
-        <!-- 2. Weekly Prediction -->
-        <div class="rectangle-8-rWtV9q"></div>
-        <div class="prediksi-mingguan-rWtV9q poppins-semi-bold-black-18px">
-          Prediksi Mingguan
+        <!-- Mobile Nav Toggle -->
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
         </div>
 
-        <!-- 3. Monthly Prediction -->
-        <div class="rectangle-9-rWtV9q"></div>
-        <div class="prediksi-bulanan-rWtV9q poppins-semi-bold-black-18px">
-          Prediksi Bulanan
+        <nav class="nav-menu">
+          <ul>
+            <li class="active">
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
         </div>
+      </aside>
 
-        <!-- Middle Charts and Insights -->
-        <!-- 1. Sales Trend Chart -->
-        <div class="rectangle-10-rWtV9q"></div>
-        <div class="tren-penjualan-rWtV9q poppins-semi-bold-black-18px">
-          Tren Penjualan
-        </div>
+      <!-- Main content -->
+      <main class="main-content">
+        <header class="top-header">
+          <h1>Dashboard</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
+              </div>
+            </a>
+          </div>
+        </header>
 
-        <!-- 2. Top iPhone -->
-        <div class="rectangle-11-rWtV9q"></div>
-        <div class="i-phone-terlaris-rWtV9q poppins-semi-bold-black-18px">
-          iPhone Terlaris
-        </div>
+        <div class="content-wrapper">
+          <!-- Prediction Cards with Charts -->
+          <div class="prediction-cards">
+            <div class="prediction-card">
+              <h2>Prediksi Harian</h2>
+              <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+              </div>
+            </div>
+            <div class="prediction-card">
+              <h2>Prediksi Mingguan</h2>
+              <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+              </div>
+            </div>
+            <div class="prediction-card">
+              <h2>Prediksi Bulanan</h2>
+              <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+              </div>
+            </div>
+          </div>
 
-        <!-- 3. Chatbot Insights -->
-        <div class="rectangle-12-rWtV9q"></div>
-        <div class="insight-chatbot-rWtV9q poppins-semi-bold-black-18px">
-          Insight Chatbot
+          <!-- History Prediction -->
+          <div class="history-section">
+            <div class="history-header">
+              <h2>History Prediction</h2>
+              <a href="{{ url_for('history') }}" class="view-all">
+                Selengkapnya <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+            <div class="history-card">
+              <div class="table-responsive">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Tanggal Prediksi</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-table-body">
+                    <!-- Data will be filled by JavaScript -->
+                    <tr>
+                      <td colspan="3" style="text-align: center">
+                        <i class="fas fa-info-circle"></i> Memuat data
+                        history...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <!-- Bottom - Prediction History Section -->
-        <div class="rectangle-13-rWtV9q"></div>
-        <div class="riwayat-prediksi-rWtV9q poppins-semi-bold-black-18px">
-          Riwayat Prediksi
-        </div>
-        <div class="tanggal-rWtV9q poppins-semi-bold-black-18px">Tanggal</div>
-        <div class="jenis-prediksi-rWtV9q poppins-semi-bold-black-18px">
-          Jenis Prediksi
-        </div>
-        <div class="selengkapnya-rWtV9q poppins-semi-bold-black-18px">
-          Selengkapnya
-        </div>
-        <img
-          class="solararrow-right-outline-rWtV9q"
-          src="{{ url_for('static', filename='assets/right-arrow.svg') }}"
-          alt="Arrow"
-        />
-      </div>
+      </main>
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Mobile sidebar toggle
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
+
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
+
+          // Change icon based on state
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Close mobile menu when clicking on a menu item
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        // Adjust menu on window resize
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove("expanded");
+            const icon = navToggle.querySelector("i");
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        // Load chart data and history data
+        loadChartData();
+        loadHistoryData();
+      });
+
+      function loadChartData() {
+        // Load Daily Prediction Data
+        fetch("/api/ml/predict?period=daily")
+          .then((response) => response.json())
+          .then((data) => {
+            // Parse the data appropriately
+            const predictions = data.predictions || data.data || data;
+            renderDailyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading daily prediction data:", error);
+            renderEmptyChart("dailyChart", "Failed to load daily data");
+          });
+
+        // Load Weekly Prediction Data
+        fetch("/api/ml/predict?period=weekly")
+          .then((response) => response.json())
+          .then((data) => {
+            const predictions = data.predictions || data.data || data;
+            renderWeeklyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading weekly prediction data:", error);
+            renderEmptyChart("weeklyChart", "Failed to load weekly data");
+          });
+
+        // Load Monthly Prediction Data
+        fetch("/api/ml/predict?period=monthly")
+          .then((response) => response.json())
+          .then((data) => {
+            const predictions = data.predictions || data.data || data;
+            renderMonthlyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading monthly prediction data:", error);
+            renderEmptyChart("monthlyChart", "Failed to load monthly data");
+          });
+      }
+
+      function renderDailyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart("dailyChart", "No daily prediction data available");
+          return;
+        }
+
+        const labels = predictions.map((item) => formatDate(item.date));
+        const predictionData = predictions.map((item) => item.prediction);
+        const lowerBoundData = predictions.map((item) => item.lower_bound);
+        const upperBoundData = predictions.map((item) => item.upper_bound);
+
+        const ctx = document.getElementById("dailyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                borderColor: "#2196f3",
+                backgroundColor: "rgba(33, 150, 243, 0.1)",
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+              },
+              {
+                label: "Lower Bound",
+                data: lowerBoundData,
+                borderColor: "rgba(33, 150, 243, 0.3)",
+                backgroundColor: "transparent",
+                borderWidth: 1,
+                borderDash: [5, 5],
+                tension: 0.4,
+                fill: false,
+              },
+              {
+                label: "Upper Bound",
+                data: upperBoundData,
+                borderColor: "rgba(33, 150, 243, 0.3)",
+                backgroundColor: "transparent",
+                borderWidth: 1,
+                borderDash: [5, 5],
+                tension: 0.4,
+                fill: "-1",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderWeeklyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart(
+            "weeklyChart",
+            "No weekly prediction data available"
+          );
+          return;
+        }
+
+        const labels = predictions.map((item) =>
+          formatWeek(item.week || item.date)
+        );
+        const predictionData = predictions.map((item) => item.prediction);
+
+        const ctx = document.getElementById("weeklyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                backgroundColor: "rgba(33, 150, 243, 0.7)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderMonthlyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart(
+            "monthlyChart",
+            "No monthly prediction data available"
+          );
+          return;
+        }
+
+        const labels = predictions.map((item) =>
+          formatMonth(item.month || item.date)
+        );
+        const predictionData = predictions.map((item) => item.prediction);
+
+        const ctx = document.getElementById("monthlyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                backgroundColor: "rgba(76, 175, 80, 0.7)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderEmptyChart(chartId, message) {
+        const ctx = document.getElementById(chartId).getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: [""],
+            datasets: [],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: message,
+                font: {
+                  size: 16,
+                },
+              },
+            },
+            scales: {
+              x: {
+                display: false,
+              },
+              y: {
+                display: false,
+              },
+            },
+          },
+        });
+      }
+
+      function loadHistoryData() {
+        // This would normally be an API call to get history data
+        // For now, we'll use placeholder data
+        const historyTableBody = document.getElementById("history-table-body");
+
+        // Example fetch (uncomment and modify when your API is ready)
+        /* 
+        fetch('/api/predictions/history')
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              renderHistoryTable(data);
+            } else {
+              historyTableBody.innerHTML = `
+                <tr>
+                  <td colspan="3" style="text-align: center">
+                    <i class="fas fa-info-circle"></i> Tidak ada data history prediksi
+                  </td>
+                </tr>
+              `;
+            }
+          })
+          .catch(error => {
+            console.error('Error loading history data:', error);
+            historyTableBody.innerHTML = `
+              <tr>
+                <td colspan="3" style="text-align: center">
+                  <i class="fas fa-exclamation-circle"></i> Gagal memuat data history
+                </td>
+              </tr>
+            `;
+          });
+        */
+
+        // For now, we'll use placeholder data
+        const placeholderData = [
+          { id: "H001", date: "2025-05-14" },
+          { id: "H002", date: "2025-05-13" },
+          { id: "H003", date: "2025-05-12" },
+          { id: "H004", date: "2025-05-11" },
+          { id: "H005", date: "2025-05-10" },
+        ];
+
+        renderHistoryTable(placeholderData);
+      }
+
+      function renderHistoryTable(historyData) {
+        const historyTableBody = document.getElementById("history-table-body");
+        historyTableBody.innerHTML = "";
+
+        historyData.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${formatDate(item.date)}</td>
+            <td>
+              <button class="action-btn" onclick="viewHistoryDetail('${
+                item.id
+              }')">
+                <i class="fas fa-eye"></i> Detail
+              </button>
+            </td>
+          `;
+          historyTableBody.appendChild(row);
+        });
+      }
+
+      function viewHistoryDetail(id) {
+        // This function would navigate to the history detail page
+        window.location.href = `/history/detail/${id}`;
+      }
+
+      // Utility formatting functions
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
+        const options = { year: "numeric", month: "numeric", day: "numeric" };
+        return new Date(dateString).toLocaleDateString("id-ID", options);
+      }
+
+      function formatWeek(weekString) {
+        if (!weekString) return "N/A";
+        // If it's already in week format, return as is
+        if (typeof weekString === "string" && weekString.includes("Minggu")) {
+          return weekString;
+        }
+        // Format as simple date without range
+        try {
+          const date = new Date(weekString);
+          return `${date.getDate()}/${
+            date.getMonth() + 1
+          }/${date.getFullYear()}`;
+        } catch (e) {
+          return weekString;
+        }
+      }
+
+      function formatMonth(monthString) {
+        if (!monthString) return "N/A";
+        // If it's already in month format, return as is
+        if (typeof monthString === "string" && monthString.length <= 10) {
+          try {
+            const date = new Date(monthString);
+            // Format as DD/MM/YYYY
+            return `${String(date.getDate()).padStart(2, "0")}/${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}/${date.getFullYear()}`;
+          } catch (e) {
+            return monthString;
+          }
+        }
+        // Otherwise format as month name
+        try {
+          const date = new Date(monthString);
+          return `${String(date.getDate()).padStart(2, "0")}/${String(
+            date.getMonth() + 1
+          ).padStart(2, "0")}/${date.getFullYear()}`;
+        } catch (e) {
+          return monthString;
+        }
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(value);
+      }
+
+      function formatCompactCurrency(value) {
+        // Format large numbers in a more compact way
+        if (value >= 1000000000) {
+          return "Rp" + (value / 1000000000).toFixed(1) + " M";
+        } else if (value >= 1000000) {
+          return "Rp" + (value / 1000000).toFixed(1) + " Jt";
+        } else if (value >= 1000) {
+          return "Rp" + (value / 1000).toFixed(1) + " Rb";
+        }
+        return "Rp" + value;
+      }
+    </script>
   </body>
 </html>
