@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import pandas as pd
 import numpy as np
 import traceback
@@ -8,11 +8,15 @@ from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import datetime
 import tensorflow as tf
+from . import db, bcrypt
+from uuid import uuid4
+from app.models import History
 import os
 import pickle
 from statsmodels.tsa.seasonal import STL
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras._tf_keras.keras.models import load_model
+from pytz import timezone, utc
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 historical_data_path=os.path.join(BASE_DIR,'ml_data','customer_segmentation_result .csv')
@@ -818,3 +822,113 @@ def predict():
         'status': 'success',
         'data': hasil_prediksi
     }), 200
+
+@ml_bp.route('/predict/save', methods=['POST'])
+@jwt_required()
+def save_prediction():
+    akun_id = get_jwt_identity()
+    data = request.get_json()
+
+    if not data or 'data' not in data:
+        return jsonify({"message": "data wajib diisi"}), 400
+
+    result_prediction = data['data']
+
+    try:
+        new_history = History(
+            id=str(uuid4()),
+            akun_id=akun_id,
+            result_prediction=result_prediction,
+        )
+        db.session.add(new_history)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Hasil prediksi berhasil disimpan",
+            "history_id": new_history.id,
+            "prediction_at": new_history.prediction_at.isoformat()
+        }), 201
+
+    except Exception as e:
+        return jsonify({"message": f"Terjadi kesalahan saat menyimpan: {str(e)}"}), 500
+    
+@ml_bp.route('/predict/histories', methods=['GET'])
+@jwt_required()
+def get_prediction_histories():
+    akun_id = get_jwt_identity()
+
+    # Ambil zona waktu dari header
+    client_timezone_str = request.headers.get('X-Timezone', 'UTC')
+    try:
+        client_tz = timezone(client_timezone_str)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid timezone format!"}), 400
+
+    try:
+        histories = History.query.filter_by(akun_id=akun_id).order_by(History.prediction_at.desc()).all()
+
+        result = []
+        for history in histories:
+            # Konversi prediction_at ke waktu lokal
+            prediction_at_utc = history.prediction_at.replace(tzinfo=utc)
+            prediction_at_local = prediction_at_utc.astimezone(client_tz)
+            prediction_at_formatted = prediction_at_local.strftime('%d-%m-%Y / %H:%M:%S %Z')
+
+            result.append({
+                "id": history.id,
+                "prediction_at": prediction_at_formatted
+            })
+
+        return jsonify({
+            "status": "success",
+            "histories": result
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@ml_bp.route('/predict/histories/detail', methods=['POST'])
+@jwt_required()
+def get_prediction_detail():
+    akun_id = get_jwt_identity()
+    data = request.get_json()
+
+    history_id = data.get("id")
+    if not history_id:
+        return jsonify({"status": "error", "message": "History ID is required"}), 400
+
+    # Ambil timezone dari header
+    client_timezone_str = request.headers.get('X-Timezone', 'UTC')
+    try:
+        client_tz = timezone(client_timezone_str)
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid timezone format!"}), 400
+
+    try:
+        history = History.query.filter_by(id=history_id, akun_id=akun_id).first()
+
+        if not history:
+            return jsonify({
+                "status": "error",
+                "message": "History not found or you don't have access"
+            }), 404
+
+        # Konversi prediction_at ke waktu lokal
+        prediction_at_utc = history.prediction_at.replace(tzinfo=utc)
+        prediction_at_local = prediction_at_utc.astimezone(client_tz)
+        prediction_at_formatted = prediction_at_local.strftime('%d-%m-%Y / %H:%M:%S %Z')
+
+        return jsonify({
+            "status": "success",
+            "id": history.id,
+            "prediction_at": prediction_at_formatted,
+            "predictions": history.result_prediction
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+

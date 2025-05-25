@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Predicto - Login</title>
     <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/login.css') }}"
     />
@@ -24,7 +29,20 @@
           <a href="{{url_for('register')}}" class="register-link">Register</a>
         </p>
 
-        <form action="{{ url_for('login') }}" method="POST">
+        <div id="alert-container">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div
+            class="alert alert-{{ 'success' if category == 'success' else 'error' }}"
+            id="alert"
+          >
+            <span>{{ message }}</span>
+            <button class="alert-close" onclick="closeAlert()">&times;</button>
+          </div>
+          {% endfor %} {% endif %} {% endwith %}
+        </div>
+
+        <form action="{{ url_for('login') }}" method="POST" id="loginForm">
           <div class="form-group">
             <input
               type="text"
@@ -91,6 +109,38 @@
             '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
         }
       }
+
+      function closeAlert() {
+        const alert = document.getElementById("alert");
+        if (alert) {
+          alert.classList.add("fade-out");
+          setTimeout(() => {
+            alert.remove();
+          }, 300);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const alert = document.getElementById("alert");
+        if (alert) {
+          setTimeout(() => {
+            closeAlert();
+          }, 5000);
+        }
+      });
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (e) {
+          const submitBtn = document.querySelector(".login-btn");
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Logging in...";
+
+          setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Login";
+          }, 3000);
+        });
     </script>
   </body>
 </html>

@@ -1,18 +1,20 @@
 import os
 import requests
+from flask_cors import CORS
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from app import create_app, db
 from flask_jwt_extended import JWTManager
 from app.models import TokenBlacklist
 from flask_mail import Message
-import uuid
+import uuid, json, datetime
 from datetime import datetime, timedelta
 from app.models import User, PasswordResetToken
 from app import mail 
-import json
+
 
 # Membuat instance aplikasi
 app = create_app()
+CORS(app, supports_credentials=True)
 
 # Tambahkan secret_key untuk session
 app.secret_key = os.environ.get('JWT_SECRET_KEY')
@@ -21,11 +23,8 @@ app.secret_key = os.environ.get('JWT_SECRET_KEY')
 app.template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'frontend/templates')
 app.static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'frontend/static')
 
-# Base URL untuk API
-API_BASE_URL = "http://127.0.0.1:5000"
-
 # Membuat tabel dalam konteks aplikasi
-with app.app_context():
+with app.app_context(): 
     db.create_all()
 
 
@@ -52,18 +51,30 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
-        response = requests.post(API_BASE_URL + '/api/auth/login', json={
-            'username': username,
-            'password': password
-        })
-
-        if response.status_code == 200:
-            access_token = response.json().get('access_token')
-            session['access_token'] = access_token
-            return redirect(url_for('dashboard'))
-        else:
-           flash(response.json().get('message', 'Login gagal, periksa kembali username dan password'), 'error')
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long, contain at least one uppercase letter and one digit.', 'error')
+            return render_template('auth/login.html')
+        try:
+            response = requests.post(f'{request.host_url}/api/auth/login', json={
+                'username': username,
+                'password': password
+            })
+            if response.status_code == 200:
+                access_token = response.json().get('access_token')
+                session['access_token'] = access_token
+                
+                return redirect(url_for('dashboard'))
+            else:
+                error_message = response.json().get('message', 'Login gagal, periksa kembali username dan password')
+                flash(error_message, 'error')
+                return render_template('auth/login.html')
+                
+        except requests.exceptions.RequestException as e:
+            flash('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error')
+            return render_template('auth/login.html')
+        except Exception as e:
+            flash('Terjadi kesalahan tidak terduga. Silakan coba lagi.', 'error')
+            return render_template('auth/login.html')
     return render_template('auth/login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -72,119 +83,114 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        
+        if len(password) < 8:
+            flash("Password harus minimal 8 karakter", "error")
+            return render_template('auth/register.html')
+        
+        if not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
+            flash("Password harus mengandung minimal 1 huruf besar dan 1 angka", "error")
+            return render_template('auth/register.html')
+        
+        try:
+            response = requests.post(f'{request.host_url}api/auth/register', json={
+                'username': username,
+                'email': email,
+                'password': password
+            })
 
-        response = requests.post(API_BASE_URL + '/api/auth/register', json={
-            'username': username,
-            'email': email,
-            'password': password
-        })
-
-        if response.status_code == 201:
-            flash("Registrasi berhasil, silakan login.", "success")
-            return redirect(url_for('login'))
-        else:
-            flash(response.json().get('message', 'Registrasi gagal'), 'error')
+            if response.status_code == 201:
+                flash("Akun berhasil dibuat! Silakan login.", "success")
+                return redirect(url_for('login'))
+            else:
+                error_message = response.json().get('message', 'Registrasi gagal')
+                
+                if 'username' in error_message.lower() and 'already' in error_message.lower():
+                    flash("Username sudah digunakan. Silakan pilih username lain.", "error")
+                elif 'email' in error_message.lower() and 'already' in error_message.lower():
+                    flash("Email sudah terdaftar. Silakan gunakan email lain atau login.", "error")
+                else:
+                    flash(error_message, "error")
+                    
+                return render_template('auth/register.html')
+                
+        except requests.exceptions.RequestException as e:
+            flash("Terjadi kesalahan koneksi. Silakan coba lagi.", "error")
+            return render_template('auth/register.html')
+        except Exception as e:
+            flash("Terjadi kesalahan tak terduga. Silakan coba lagi.", "error")
+            return render_template('auth/register.html')
+        
     return render_template('auth/register.html')
 
 @app.route('/lupa-password', methods=['GET', 'POST'])
 def lupa_password():
     if request.method == 'POST':
-        email = request.form.get('email')  # ambil dari form, bukan JSON
-
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            flash("Email tidak ditemukan. Silakan coba lagi.", "danger")
-            return redirect(url_for('lupa_password'))
-
-        # Generate reset token
-        reset_token = str(uuid.uuid4())
-        expires_at = datetime.utcnow() + timedelta(hours=1)
-
-        # Simpan token ke DB
-        token_entry = PasswordResetToken(
-            id=str(uuid.uuid4()),
-            user_id=user.id,
-            token=reset_token,
-            expires_at=expires_at
-        )
-        db.session.add(token_entry)
-        db.session.commit()
-
-        # Buat tautan reset password
-        reset_link = API_BASE_URL+f"/reset-password/{reset_token}"
-
-        # Kirim email
-        msg = Message(
-            subject="Reset Password",
-            sender="youremail@gmail.com",  # ganti dengan email valid
-            recipients=[email],
-            html=f"""
-            <p>Click the button below to reset your password:</p>
-            <a href="{reset_link}" 
-               style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#ffffff;text-decoration:none;border-radius:5px;">
-               Reset Password
-            </a>
-            <p>If you didn’t request this, please ignore this email.</p>
-            """
-        )
-        mail .send(msg)
-
-        flash("Tautan reset password telah dikirim ke email Anda.", "success")
-        return redirect(url_for('login'))
-
+        email = request.form['email']
+        
+        response = requests.post(f'{request.host_url}/api/auth/forgot-password', json={
+            'email': email
+        })
+        
+        if response.status_code == 200:
+            flash('Link reset password telah dikirim ke email Anda. Silakan periksa kotak masuk Anda.', 'success')
+            return render_template('auth/lupa-password.html')
+        else:
+            flash(response.json().get('message', 'Email tidak ditemukan'), 'error')
+            return render_template('auth/lupa-password.html')
+    
     return render_template('auth/lupa-password.html')
-
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('main-feature/dashboard.html')
+    if 'access_token' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('login'))
+    return render_template('main-feature/dashboard.html', token=session['access_token'])
 
 @app.route('/prediction')
 def prediction():
     if 'access_token' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('login'))
-    return render_template('main-feature/prediction.html')
+    return render_template('main-feature/prediction.html', token=session['access_token'])
 
 @app.route('/api/ml/predict')
 def predict():
     if 'access_token' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
     
-    # Get period from request arguments
     period = request.args.get('period', 'daily')
     
-    # Map period to the API's expected frequency format
     frequency_map = {
         'daily': 'D',
         'weekly': 'W',
         'monthly': 'ME'
     }
     
-    frequency = frequency_map.get(period)  # Default to daily if invalid period
+    frequency = frequency_map.get(period)  
     
     headers = {
         'Authorization': f'Bearer {session["access_token"]}',
         'Content-Type': 'application/json'
     }
     
-    # Create the JSON payload with frequency
     payload = {
         "frequency": frequency
     }
     
     try:
-        # Use POST with JSON body instead of GET with query parameters
+        
         response = requests.post(
-            f'{API_BASE_URL}/ml/predict',
+            f'{request.host_url}/api/ml/predict',
             headers=headers,
-            json=payload  # This will be sent as raw JSON in the request body
+            json=payload  
         )
         
         if response.status_code == 200:
             return jsonify(response.json())
         else:
-            # Log the error response for debugging
+            
             error_message = f"API Error: {response.status_code}"
             try:
                 error_data = response.json()
@@ -203,29 +209,28 @@ def predict():
 def save_prediction():
     if 'access_token' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
-    
     try:
-        # Get prediction data from request
-        prediction_data = request.json
         
-        # Forward request to backend API
+        prediction_data = request.json
+        token=session['access_token']
+        
         headers = {
-            'Authorization': f'Bearer {session["access_token"]}',
+            'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
         }
         
-        # Log the request data for debugging
+        
         print(f"Sending prediction data to API: {json.dumps(prediction_data)}")
         
-        # Send the prediction data to backend for saving
+        
         response = requests.post(
-            f'{API_BASE_URL}/ml/predict/save',
+            f'{request.host_url}/api/ml/predict/save',
             headers=headers,
             json=prediction_data,
             timeout=30
         )
         
-        # Log the response for debugging
+        
         print(f"Response from API: Status {response.status_code}")
         try:
             response_data = response.json()
@@ -254,37 +259,38 @@ def get_prediction_histories():
         return jsonify({'error': 'Unauthorized'}), 401
     
     try:
-        # Set up the headers with the access token
+        
         headers = {
+            'X-Timezone': 'Asia/Jakarta',
             'Authorization': f'Bearer {session["access_token"]}',
             'Content-Type': 'application/json'
         }
         
-        # Log request for debugging
-        print(f"Making request to {API_BASE_URL}/ml/predict/histories with token {session['access_token'][:10]}...")
         
-        # Make request to backend API
+        print(f"Making request to {request.host_url}/api/ml/predict/histories with token {session['access_token'][:10]}...")
+        
+        
         response = requests.get(
-            f'{API_BASE_URL}/ml/predict/histories',
+            f'{request.host_url}/api/ml/predict/histories',
             headers=headers,
             timeout=30
         )
         
-        # Log response for debugging
+        
         print(f"Received response with status code: {response.status_code}")
         print(f"Response headers: {response.headers}")
         
         if response.content:
             try:
-                # Get raw content first for logging
+                
                 content_text = response.text
-                print(f"Raw response content: {content_text[:1000]}...")  # Print first 1000 chars
+                print(f"Raw response content: {content_text[:1000]}...")  
                 
-                # Try to parse as JSON
+                
                 response_data = response.json()
-                print(f"Parsed as JSON: {json.dumps(response_data)[:500]}...")  # Print first 500 chars
+                print(f"Parsed as JSON: {json.dumps(response_data)[:500]}...")  
                 
-                # Check structure
+                
                 if isinstance(response_data, dict) and 'histories' in response_data:
                     print(f"Found 'histories' key with {len(response_data['histories'])} items")
                     if response_data['histories']:
@@ -305,7 +311,7 @@ def get_prediction_histories():
             print("Response has no content")
         
         if response.status_code == 200:
-            # Try to extract the content directly without modifying
+            
             return response.text, 200, {'Content-Type': 'application/json'} 
         else:
             error_msg = f"Error fetching prediction histories: status {response.status_code}"
@@ -331,14 +337,88 @@ def history():
     if 'access_token' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('login'))
-    return render_template('main-feature/history-prediction.html')
+    return render_template('main-feature/history-prediction.html', token=session['access_token'])
 
-@app.route('/history/<id>')
-def detail_history(id):
+@app.route('/history/detail')
+def history_detail():
     if 'access_token' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('login'))
-    return render_template('main-feature/detail_history-prediction.html', id=id)
+    return render_template('main-feature/detail-history-prediction.html',token=session['access_token'])
+
+
+
+@app.route('/api/ml/predict/histories/detail', methods=['POST'])
+def get_prediction_detail():
+    if 'access_token' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        
+        data = request.json
+        prediction_id = data.get('id')
+        
+        if not prediction_id:
+            return jsonify({'error': 'No prediction ID provided'}), 400
+        
+        
+        headers = {
+            'X-Timezone': 'Asia/Jakarta',
+            'Authorization': f'Bearer {session["access_token"]}',
+            'Content-Type': 'application/json'
+        }
+        
+        
+        print(f"Fetching prediction detail for ID: {prediction_id}")
+        
+        
+        response = requests.post(
+            f'{request.host_url}/api/ml/predict/histories/detail',
+            headers=headers,
+            json={'id': prediction_id},
+            timeout=30
+        )
+        
+        
+        print(f"API response status: {response.status_code}")
+        print(f"API response headers: {response.headers}")
+        
+        if response.status_code == 200:
+            try:
+                
+                response_data = response.json()
+                
+                
+                print(f"API response data: {response_data}")
+                
+                
+                
+                return jsonify(response_data)
+            except Exception as e:
+                print(f"Error parsing response JSON: {str(e)}")
+                
+                return jsonify({
+                    'prediction_date': datetime.now().strftime("%Y-%m-%d"),
+                    'error': 'Invalid JSON from API',
+                    'raw_response': response.text
+                })
+        else:
+            
+            print(f"Error response from API: {response.text}")
+            return jsonify({
+                'error': 'Failed to get prediction detail', 
+                'status': response.status_code, 
+                'details': response.text
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in get_prediction_detail: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': f'Error fetching prediction detail: {str(e)}'
+        }), 500
+
 
 @app.route('/chatbot')
 def chatbot():
@@ -353,20 +433,20 @@ def api_chatbot():
         return jsonify({'error': 'Unauthorized'}), 401
     
     try:
-        # Get message from request
+        
         message = request.json.get('message')
         
         if not message:
             return jsonify({'error': 'No message provided'}), 400
         
-        # Forward request to backend API
+        
         headers = {
             'Authorization': f'Bearer {session["access_token"]}',
             'Content-Type': 'application/json'
         }
         
         response = requests.post(
-            f'{API_BASE_URL}/chatbot/',
+            f'{request.host_url}/api/chatbot/',
             headers=headers,
             json={'message': message},
             timeout=30
@@ -393,25 +473,26 @@ def setting():
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('login'))
     
-    # Get user data from API
+    
     try:
         headers = {
+            'X-Timezone': 'Asia/Jakarta',
             'Authorization': f'Bearer {session["access_token"]}'
         }
-        response = requests.get(f'{API_BASE_URL}/auth/me', headers=headers)
+        response = requests.get(f'{request.host_url}/api/auth/me', headers=headers)
         
         if response.status_code == 200:
             user_data = response.json()
-            # Format the created_at date if needed
+            
             if 'created_at' in user_data:
-                # Assuming created_at is in ISO format
+                
                 from datetime import datetime
                 try:
-                    # Parse the datetime and format it as DD-MM-YYYY
+                    
                     created_at = datetime.fromisoformat(user_data['created_at'].replace('Z', '+00:00'))
                     user_data['formatted_date'] = created_at.strftime('%d-%m-%Y')
                 except:
-                    # Fallback if date parsing fails
+                   
                     user_data['formatted_date'] = user_data['created_at']
         else:
             flash('Failed to fetch user data', 'error')
@@ -430,18 +511,17 @@ def setting():
         
     if request.method == 'POST':
         return redirect(url_for('dashboard'))
+        
+    return render_template('main-feature/setting.html', user_data=user_data)
 
-
-@app.route("/reset-password/<token>", methods=["GET"])
+@app.route("/reset-password-form/<token>", methods=["GET"])
 def reset_password_form(token):
-    return render_template("auth/new-password.html", token=token)
-
+    return render_template("auth/ubah-password.html", token=token)
 
 @app.route('/logout')
 def logout():
-    session.pop('access_token', None)
+    session.clear()
     return redirect(url_for('home'))
-
 
 
 # Menjalankan aplikasi

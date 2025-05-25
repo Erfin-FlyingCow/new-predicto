@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Predicto - Register</title>
     <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
       rel="stylesheet"
       href="{{url_for('static', filename='css/register.css')}}"
     />
@@ -25,7 +30,27 @@
             Sudah punya akun? <a href="{{ url_for('login') }}">Login</a>
           </p>
 
-          <form method="POST" action="{{ url_for('register') }}">
+          <div id="alert-container"></div>
+
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div
+            class="alert alert-{{ 'error' if category == 'error' else 'success' if category == 'success' else 'info' }}"
+          >
+            <div class="alert-content">
+              <span>{{ message }}</span>
+            </div>
+            <button class="alert-close" onclick="this.parentElement.remove()">
+              &times;
+            </button>
+          </div>
+          {% endfor %} {% endif %} {% endwith %}
+
+          <form
+            method="POST"
+            action="{{ url_for('register') }}"
+            id="registerForm"
+          >
             <input
               type="text"
               name="username"
@@ -97,6 +122,68 @@
             '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
         }
       }
+
+      function showAlert(message, type = "info") {
+        const alertContainer = document.getElementById("alert-container");
+
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${type}`;
+
+        alert.innerHTML = `
+          <div class="alert-content">
+            <span>${message}</span>
+          </div>
+          <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+        `;
+
+        alertContainer.appendChild(alert);
+
+        setTimeout(() => {
+          if (alert.parentElement) {
+            alert.remove();
+          }
+        }, 5000);
+      }
+
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", function (e) {
+          const password = document.getElementById("password").value;
+          const username = document.querySelector(
+            'input[name="username"]'
+          ).value;
+          const email = document.querySelector('input[name="email"]').value;
+
+          document.getElementById("alert-container").innerHTML = "";
+
+          if (password.length < 8) {
+            e.preventDefault();
+            showAlert(
+              "Password harus minimal 8 karakter dan mengandung huruf besar serta angka",
+              "error"
+            );
+            return;
+          }
+
+          if (!/(?=.*[A-Z])(?=.*\d)/.test(password)) {
+            e.preventDefault();
+            showAlert(
+              "Password harus mengandung minimal 1 huruf besar dan 1 angka",
+              "error"
+            );
+            return;
+          }
+
+          const submitBtn = document.querySelector(".register-button");
+          const originalText = submitBtn.textContent;
+          submitBtn.textContent = "Creating account...";
+          submitBtn.disabled = true;
+
+          setTimeout(() => {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          }, 3000);
+        });
     </script>
   </body>
 </html>

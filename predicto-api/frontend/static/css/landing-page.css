@@ -1,4 +1,3 @@
-/* style.css */
 :root {
   --primary-color: #3498db;
   --secondary-color: #3181c6;
@@ -13,6 +12,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -42,7 +45,6 @@ img {
   height: auto;
 }
 
-/* Buttons */
 .btn-primary {
   display: inline-block;
   background-color: var(--primary-color);
@@ -69,22 +71,6 @@ img {
   transition: background-color 0.3s ease;
 }
 
-.btn-outline {
-  display: inline-block;
-  background-color: transparent;
-  color: var(--primary-color);
-  padding: 10px 25px;
-  border-radius: 5px;
-  font-weight: 500;
-  border: 1px solid var(--primary-color);
-  transition: all 0.3s ease;
-}
-
-.btn-outline:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
 .navbar {
   background-color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
@@ -108,6 +94,7 @@ img {
 .nav-links {
   display: flex;
   gap: 25px;
+  margin-left: 30px;
 }
 
 .nav-links a {
@@ -139,9 +126,9 @@ img {
 .auth-buttons {
   display: flex;
   gap: 10px;
+  margin-left: 20px;
 }
 
-/* Hero Section */
 .hero {
   padding: 140px 0;
   text-align: center;
@@ -168,7 +155,6 @@ img {
   justify-content: center;
 }
 
-/* Section Titles */
 .section-title {
   text-align: center;
   font-size: 2.5rem;
@@ -188,7 +174,6 @@ img {
   transform: translateX(-50%);
 }
 
-/* Features Section */
 .features {
   padding: 80px 0;
   background-color: var(--gray-color);
@@ -244,7 +229,6 @@ img {
   color: var(--dark-color);
 }
 
-/* Pricing Section */
 .pricing {
   padding: 80px 0;
   background-color: var(--gray-color);
@@ -309,7 +293,6 @@ img {
   font-weight: bold;
 }
 
-/* About Section */
 .about {
   padding: 80px 0;
   background-color: var(--gray-color);
@@ -335,7 +318,103 @@ img {
   font-size: 1.1rem;
 }
 
-/* Footer */
+.team {
+  padding: 80px 0;
+  background-color: var(--gray-color);
+}
+
+.team-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.team-card {
+  background-color: var(--light-color);
+  border: 1px solid;
+  border-color: var(--dark-color);
+  padding: 30px 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.team-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.team-image {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--primary-color);
+}
+
+.team-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+  color: var(--dark-color);
+}
+
+.team-role {
+  color: var(--primary-color);
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: auto;
+  padding-top: 15px;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--gray-color);
+  transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+  background-color: var(--primary-color);
+}
+
+.social-icon img {
+  width: 20px;
+  height: 20px;
+}
+
+.github:hover {
+  background-color: #24292e;
+}
+
+.linkedin:hover {
+  background-color: #0077b5;
+}
+
 .footer {
   background-color: var(--footer-bg);
   padding: 25px 0 20px;
@@ -347,10 +426,6 @@ img {
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
-
-/* .footer-logo {
-  width: 50px;
-} */
 
 .footer-links {
   flex: 2;
@@ -367,12 +442,12 @@ img {
 
 .footer-column h4 {
   font-size: 1.1rem;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   color: var(--dark-color);
 }
 
 .footer-column ul li {
-  margin-bottom: 10px;
+  margin-bottom: 7px;
 }
 
 .footer-column ul li a {
@@ -392,8 +467,17 @@ img {
   font-size: 0.9rem;
 }
 
-/* Responsive Styles */
 @media (max-width: 768px) {
+  .team-cards {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+
+  .team-card {
+    min-width: 45%;
+    padding: 20px 15px;
+  }
+
   .hero h1 {
     font-size: 3rem;
   }
@@ -434,7 +518,6 @@ img {
   height: 20px;
   position: relative;
   z-index: 200;
-  /* margin-left: 15px; */
 }
 
 .hamburger span {
@@ -502,14 +585,18 @@ body.no-scroll {
   display: none;
 }
 
-/* Mobile phones (portrait and landscape) */
-@media (min-width: 320px) and (max-width: 767px) {
-  /* Show hamburger menu */
+@media (max-width: 576px) {
+  .team-card {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 768px) {
   .hamburger {
     display: block;
   }
 
-  /* Center logo and adjust size */
   .logo img {
     height: 40px;
   }
@@ -519,12 +606,10 @@ body.no-scroll {
     padding: 0 15px;
   }
 
-  /* Hide desktop auth buttons */
   .auth-buttons {
     display: none;
   }
 
-  /* Style mobile navigation menu */
   .nav-links {
     position: fixed;
     top: 0;
@@ -549,7 +634,6 @@ body.no-scroll {
     right: 0;
   }
 
-  /* Add auth buttons inside mobile menu */
   .nav-links .mobile-auth-buttons {
     display: flex;
     flex-direction: column;
@@ -565,7 +649,6 @@ body.no-scroll {
     margin-bottom: 10px;
   }
 
-  /* Menu items styling */
   .nav-links li {
     width: 80%;
     text-align: center;
@@ -579,56 +662,300 @@ body.no-scroll {
   }
 }
 
-/* Mobile phones (landscape) */
 @media (min-width: 320px) and (max-width: 767px) and (orientation: landscape) {
   .logo img {
-    height: 35px; /* Slightly smaller in landscape */
+    height: 35px;
   }
 
-  /* Adjust menu padding for landscape */
   .nav-links {
     padding-top: 60px;
     justify-content: flex-start;
   }
 
-  /* Make menu items more compact in landscape */
   .nav-links li a {
     padding: 8px 0;
   }
 
   .nav-links .mobile-auth-buttons {
     margin-top: 15px;
-    flex-direction: row; /* Side by side in landscape */
+    flex-direction: row;
   }
 }
 
-/* Tablets (portrait and landscape) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .logo img {
     height: 45px;
   }
 
-  /* Slightly smaller buttons on tablets */
   .btn-primary,
   .btn-secondary {
     padding: 8px 20px;
     font-size: 0.95rem;
   }
 
-  /* Adjust nav links spacing */
   .nav-links {
     gap: 20px;
   }
 }
 
-/* Tablets (landscape) */
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
   .navbar .container {
     padding: 0 20px;
   }
 
-  /* Slightly more spacing in landscape tablet mode */
   .nav-links {
     gap: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: 98%;
+    padding: 0 8px;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-text {
+    font-size: 0.9rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .team-cards {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  .team-card {
+    min-width: 100%;
+  }
+
+  .footer-links {
+    flex-direction: column;
+  }
+
+  .footer-column {
+    min-width: 100%;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 350px) {
+  .hamburger {
+    display: block;
+    margin-right: 10px;
+  }
+
+  .navbar .container {
+    padding: 0 5px;
+  }
+
+  .logo img {
+    height: 35px;
+    margin-left: 10px;
+  }
+
+  .auth-buttons {
+    display: none;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 90%;
+    max-width: 280px;
+    height: 100vh;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+    padding-top: 60px;
+    transition: right 0.3s ease;
+    z-index: 150;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-links .mobile-auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 85%;
+    margin-top: 20px;
+  }
+
+  .nav-links a {
+    padding: 8px 0;
+    font-size: 0.9rem;
+  }
+
+  .hero {
+    padding: 60px 0 50px;
+  }
+
+  .hero h1 {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+  }
+
+  .hero-text {
+    font-size: 0.85rem;
+    margin-bottom: 25px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hero-buttons a {
+    width: 80%;
+    max-width: 200px;
+  }
+
+  .section-title {
+    font-size: 1.6rem;
+    margin-bottom: 30px;
+  }
+
+  .features,
+  .pricing,
+  .about,
+  .team {
+    padding: 50px 0 40px;
+  }
+
+  .feature-card,
+  .pricing-card {
+    min-width: 100%;
+    margin: 0;
+    padding: 20px 15px;
+  }
+
+  .feature-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .feature-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .feature-card p {
+    font-size: 0.85rem;
+  }
+
+  .pricing-card {
+    padding: 25px 15px;
+  }
+
+  .plan-name {
+    font-size: 1.3rem;
+  }
+
+  .price {
+    font-size: 1.8rem;
+  }
+
+  .features-list li {
+    font-size: 0.85rem;
+  }
+
+  .about-logo {
+    width: 120px;
+    margin-bottom: 20px;
+  }
+
+  .about-text {
+    font-size: 0.9rem;
+  }
+
+  .team-image {
+    width: 70px;
+    height: 70px;
+  }
+
+  .team-card h3 {
+    font-size: 1rem;
+  }
+
+  .team-role {
+    font-size: 0.85rem;
+  }
+
+  .social-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .social-icon img {
+    width: 15px;
+    height: 15px;
+  }
+
+  .footer {
+    padding: 30px 0 15px;
+  }
+
+  .footer-column h4 {
+    font-size: 0.95rem;
+  }
+
+  .footer-column ul li a,
+  .footer-column ul li {
+    font-size: 0.8rem;
+  }
+
+  .copyright {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .container {
+    width: 100%;
+    padding: 0 5px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .plan-name {
+    font-size: 1.2rem;
+  }
+
+  .price {
+    font-size: 1.6rem;
+  }
+
+  .team-card {
+    padding: 15px 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    text-align: center;
   }
 }

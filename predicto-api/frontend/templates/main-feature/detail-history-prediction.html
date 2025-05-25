@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>History Detail - Predicto</title>
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/detail-history-prediction.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
+        </div>
+
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
+
+        <nav class="nav-menu">
+          <ul>
+            <li>
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li class="active">
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="top-header">
+          <h1>Detail History Prediction</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
+              </div>
+            </a>
+          </div>
+        </header>
+
+        <div class="content-wrapper">
+          <section class="history-section">
+            <div class="detail-card">
+              <div class="detail-header">
+                <a href="{{ url_for('history') }}">
+                  <button id="back-button" class="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Kembali</span>
+                  </button>
+                </a>
+
+                <div id="prediction-id" class="prediction-id"></div>
+              </div>
+
+              <div id="loading-state" class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Memuat detail prediksi...</p>
+              </div>
+
+              <div id="error-state" class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Gagal memuat detail prediksi.</p>
+                <button
+                  class="action-button detail-button"
+                  onclick="fetchPredictionDetail()"
+                >
+                  <i class="fas fa-redo"></i> Coba Lagi
+                </button>
+              </div>
+
+              <div id="prediction-detail" style="display: none">
+                <div class="prediction-meta">
+                  <div class="meta-item">
+                    <h4>Tanggal / Waktu Prediksi</h4>
+                    <p id="prediction-date">-</p>
+                  </div>
+                </div>
+
+                <h3>Data Prediksi</h3>
+                <div class="table-responsive">
+                  <table id="detail-table" class="detail-table">
+                    <thead>
+                      <tr>
+                        <th>Tanggal</th>
+                        <th>Prediksi Penjualan (Rp)</th>
+                        <th>Lower Bound (Rp)</th>
+                        <th>Upper Bound (Rp)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="detail-data"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
+
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
+
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
+            sidebar.classList.remove("expanded");
+            const icon = navToggle.querySelector("i");
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const predictionId = urlParams.get("id");
+
+        if (predictionId) {
+          document.getElementById(
+            "prediction-id"
+          ).textContent = `ID: ${predictionId}`;
+          fetchPredictionDetail(predictionId);
+        } else {
+          document.getElementById("error-state").style.display = "flex";
+          document.getElementById("loading-state").style.display = "none";
+          document
+            .getElementById("error-state")
+            .querySelector("p").textContent = "ID prediksi tidak ditemukan.";
+        }
+      });
+
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
+
+        const date = new Date(dateString);
+        if (isNaN(date)) return dateString;
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+      }
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(value);
+      }
+
+      function fetchPredictionDetail(predictionId) {
+        if (!predictionId) {
+          const urlParams = new URLSearchParams(window.location.search);
+          predictionId = urlParams.get("id");
+
+          if (!predictionId) {
+            document.getElementById("error-state").style.display = "flex";
+            document.getElementById("loading-state").style.display = "none";
+            document
+              .getElementById("error-state")
+              .querySelector("p").textContent = "ID prediksi tidak ditemukan.";
+            return;
+          }
+        }
+
+        document.getElementById("loading-state").style.display = "flex";
+        document.getElementById("error-state").style.display = "none";
+        document.getElementById("prediction-detail").style.display = "none";
+
+
+        const accessToken = "{{ token }}";
+        fetch("/api/ml/predict/histories/detail", {
+          method: "POST",
+          headers: {
+            'X-Timezone': 'Asia/Jakarta',
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`, 
+          },
+          body: JSON.stringify({ id: predictionId }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Network response error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Received data:", data);
+
+            renderPredictionDetail(data);
+          })
+          .catch((error) => {
+            console.error("Error fetching prediction detail:", error);
+            document.getElementById("loading-state").style.display = "none";
+            document.getElementById("error-state").style.display = "flex";
+            document
+              .getElementById("error-state")
+              .querySelector(
+                "p"
+              ).textContent = `Gagal memuat detail prediksi: ${error.message}`;
+          });
+      }
+
+      function renderPredictionDetail(data) {
+        document.getElementById("loading-state").style.display = "none";
+
+        document.getElementById("prediction-detail").style.display = "block";
+
+        document.getElementById("prediction-date").textContent = formatDate(
+          data.prediction_at || data.prediction_date || data.created_at
+        );
+
+        const predictionItems = data.prediction_items || data.items || [];
+        const predictions = data.predictions || [];
+
+        if (predictionItems && predictionItems.length > 0) {
+          const detailData = document.getElementById("detail-data");
+          detailData.innerHTML = "";
+
+          predictionItems.forEach((item) => {
+            const row = document.createElement("tr");
+
+            const prediction = item.prediction || 0;
+            const lowerBound = item.lower_bound || 0;
+            const upperBound = item.upper_bound || 0;
+
+            row.innerHTML = `
+        <td>${formatDate(item.date)}</td>
+        <td>${formatCurrency(prediction)}</td>
+        <td>${formatCurrency(lowerBound)}</td>
+        <td>${formatCurrency(upperBound)}</td>
+      `;
+            detailData.appendChild(row);
+          });
+        } else if (predictions && predictions.length > 0) {
+          const detailData = document.getElementById("detail-data");
+          detailData.innerHTML = "";
+
+          predictions.forEach((item) => {
+            const row = document.createElement("tr");
+
+            const prediction = item.prediction || 0;
+            const lowerBound = item.lower_bound || 0;
+            const upperBound = item.upper_bound || 0;
+
+            row.innerHTML = `
+        <td>${formatDate(item.date)}</td>
+        <td>${formatCurrency(prediction)}</td>
+        <td>${formatCurrency(lowerBound)}</td>
+        <td>${formatCurrency(upperBound)}</td>
+      `;
+            detailData.appendChild(row);
+          });
+        } else {
+          document.getElementById("detail-data").innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center;">Tidak ada data prediksi tersedia</td>
+      </tr>
+    `;
+        }
+      }
+    </script>
+  </body>
+</html>

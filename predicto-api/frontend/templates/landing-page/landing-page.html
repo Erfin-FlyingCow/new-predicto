@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Predicto - Platform Prediksi Penjualan iPhone</title>
     <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/landing-page.css') }}"
     />
@@ -16,7 +21,6 @@
     />
   </head>
   <body>
-    <!-- Navigation -->
     <nav class="navbar">
       <div class="container">
         <div class="logo">
@@ -31,7 +35,7 @@
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
           <a href="#about">About</a>
-          <!-- Tambahkan tombol login dan register untuk tampilan mobile -->
+
           <div class="mobile-auth-buttons">
             <a href="{{url_for('login')}}" class="btn-secondary">Login</a>
             <a href="{{url_for('register')}}" class="btn-primary">Register</a>
@@ -49,7 +53,6 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
       <div class="container">
         <h1>Predicto.</h1>
@@ -64,7 +67,6 @@
       </div>
     </section>
 
-    <!-- Features Section -->
     <section id="features" class="features">
       <div class="container">
         <h2 class="section-title">Features</h2>
@@ -119,7 +121,6 @@
       </div>
     </section>
 
-    <!-- Pricing Section -->
     <section id="pricing" class="pricing">
       <div class="container">
         <h2 class="section-title">Pricing</h2>
@@ -132,7 +133,6 @@
               <span class="amount">0</span>
               <span class="period">/bln</span>
             </div>
-            <a href="#" class="btn-outline">Pilih Paket</a>
             <ul class="features-list">
               <li>Prediksi penjualan harian (limitasi harian)</li>
               <li>Akses chatbot (limitasi harian)</li>
@@ -147,7 +147,7 @@
               <span class="amount">150.000</span>
               <span class="period">/bln</span>
             </div>
-            <a href="#" class="btn-outline">Pilih Paket</a>
+
             <ul class="features-list">
               <li>Prediksi penjualan harian</li>
               <li>Prediksi penjualan mingguan (limitasi harian)</li>
@@ -163,7 +163,7 @@
               <span class="amount">250.000</span>
               <span class="period">/bln</span>
             </div>
-            <a href="#" class="btn-outline">Pilih Paket</a>
+
             <ul class="features-list">
               <li>Prediksi penjualan harian</li>
               <li>Prediksi penjualan mingguan</li>
@@ -176,7 +176,6 @@
       </div>
     </section>
 
-    <!-- About Section -->
     <section id="about" class="about">
       <div class="container">
         <div class="about-content">
@@ -202,17 +201,149 @@
       </div>
     </section>
 
-    <!-- Footer -->
+    <section id="about" class="team">
+      <div class="container">
+        <h2 class="section-title">Our Team</h2>
+
+        <div class="team-cards">
+          <div class="team-card">
+            <div class="team-image">
+              <img
+                src="{{ url_for('static', filename='assets/hilmi.jpg') }}"
+                alt="Hilmiyatul Asna"
+              />
+            </div>
+            <h3>Hilmiyatul Asna</h3>
+            <p class="team-role">Machine Learning Engineer</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/hilmiyatulasna"
+                target="_blank"
+                class="social-icon github"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/github.svg') }}"
+                  alt="GitHub"
+                />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/hilmiyatulasna/"
+                target="_blank"
+                class="social-icon linkedin"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/linkedin.svg') }}"
+                  alt="LinkedIn"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="team-card">
+            <div class="team-image">
+              <img
+                src="{{ url_for('static', filename='assets/made.jpg') }}"
+                alt="Made Dharmagiri"
+              />
+            </div>
+            <h3>Made Dharmagiri</h3>
+            <p class="team-role">Frontend Developer</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/madegiri"
+                target="_blank"
+                class="social-icon github"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/github.svg') }}"
+                  alt="GitHub"
+                />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/made-dharmagiri"
+                target="_blank"
+                class="social-icon linkedin"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/linkedin.svg') }}"
+                  alt="LinkedIn"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="team-card">
+            <div class="team-image">
+              <img
+                src="{{ url_for('static', filename='assets/noufal.jpg') }}"
+                alt="Muhammad Irfan Noufal"
+              />
+            </div>
+            <h3>Muhammad Irfan Noufal</h3>
+            <p class="team-role">Backend Developer</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/Erfin-FlyingCow"
+                target="_blank"
+                class="social-icon github"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/github.svg') }}"
+                  alt="GitHub"
+                />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/muhammad-irfan-noufal-388b312bb/"
+                target="_blank"
+                class="social-icon linkedin"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/linkedin.svg') }}"
+                  alt="LinkedIn"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="team-card">
+            <div class="team-image">
+              <img
+                src="{{ url_for('static', filename='assets/syifa.jpg') }}"
+                alt="Syifa Azzahirah"
+              />
+            </div>
+            <h3>Syifa Azzahirah</h3>
+            <p class="team-role">Data Analyst</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/syifaazhh"
+                target="_blank"
+                class="social-icon github"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/github.svg') }}"
+                  alt="GitHub"
+                />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/syifaazzahirah/"
+                target="_blank"
+                class="social-icon linkedin"
+              >
+                <img
+                  src="{{ url_for('static', filename='assets/linkedin.svg') }}"
+                  alt="LinkedIn"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
-          <!-- <div class="footer-logo">
-            <img
-              src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
-              alt="Predicto Logo"
-            />
-          </div> -->
-
           <div class="footer-links">
             <div class="footer-column">
               <h4>Quick Links</h4>
@@ -252,7 +383,6 @@
     </footer>
 
     <script>
-      // Hamburger menu toggle
       const hamburger = document.querySelector(".hamburger");
       const navLinks = document.querySelector(".nav-links");
 
@@ -261,7 +391,6 @@
         navLinks.classList.toggle("active");
       });
 
-      // Close menu when clicking on a link
       document.querySelectorAll(".nav-links a").forEach((link) => {
         link.addEventListener("click", () => {
           hamburger.classList.remove("active");
@@ -269,7 +398,6 @@
         });
       });
 
-      // Active navigation highlighting based on scroll position
       document.addEventListener("DOMContentLoaded", () => {
         const sections = document.querySelectorAll("section[id]");
         const navLinks = document.querySelectorAll(".nav-links a");
@@ -292,7 +420,6 @@
             }
           });
 
-          // Handle home/top section
           if (scrollY < 100) {
             navLinks.forEach((link) => {
               link.classList.remove("active");
@@ -304,7 +431,7 @@
         }
 
         window.addEventListener("scroll", highlightNavigation);
-        highlightNavigation(); // Run once on page load
+        highlightNavigation();
       });
     </script>
   </body>

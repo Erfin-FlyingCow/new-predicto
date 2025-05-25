@@ -6,8 +6,8 @@
     <title>Prediction Page - Predicto</title>
     <link
       rel="shortcut icon"
-      type="image/png"
-      href="{{ url_for('static', filename='favicon.png') }}"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
     />
     <link
       rel="stylesheet"
@@ -24,7 +24,6 @@
   </head>
   <body>
     <div class="container">
-      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="logo">
           <img
@@ -33,7 +32,6 @@
           />
         </div>
 
-        <!-- Mobile Nav Toggle -->
         <div class="nav-toggle" id="nav-toggle">
           <i class="fas fa-bars"></i>
         </div>
@@ -80,7 +78,6 @@
         </div>
       </aside>
 
-      <!-- Main content -->
       <main class="main-content">
         <header class="top-header">
           <h1>Prediction</h1>
@@ -96,24 +93,52 @@
         <div class="content-wrapper">
           <section class="prediction-section">
             <div class="prediction-settings-card">
-              <h2>Pilih Rentang Waktu</h2>
-
-              <div class="prediction-controls">
-                <div class="select-wrapper">
-                  <select id="prediction-period" class="prediction-dropdown">
-                    <option value="daily">Prediksi Harian</option>
-                    <option value="weekly">Prediksi Mingguan</option>
-                    <option value="monthly">Prediksi Bulanan</option>
-                  </select>
-                  <div class="select-arrow">
-                    <i class="fas fa-chevron-down"></i>
+              <div class="settings-container">
+                <div class="settings-left">
+                  <h2>Pilih Rentang Waktu</h2>
+                  <div class="prediction-controls">
+                    <div class="select-wrapper">
+                      <select
+                        id="prediction-period"
+                        class="prediction-dropdown"
+                      >
+                        <option value="daily">Prediksi Harian</option>
+                        <option value="weekly">Prediksi Mingguan</option>
+                        <option value="monthly">Prediksi Bulanan</option>
+                      </select>
+                      <div class="select-arrow">
+                        <i class="fas fa-chevron-down"></i>
+                      </div>
+                    </div>
+                    <button id="predict-button" class="prediction-button">
+                      Prediksi
+                    </button>
+                    <button id="save-button" class="save-button">Simpan</button>
                   </div>
                 </div>
 
-                <button id="predict-button" class="prediction-button">
-                  Prediksi
-                </button>
-                <button id="save-button" class="save-button">Simpan</button>
+                <div class="settings-right">
+                  <div class="info-label">
+                    <div class="info-header">
+                      <i class="fas fa-info-circle"></i>
+                      <span>Catatan tentang Periode Prediksi:</span>
+                    </div>
+                    <ul class="info-list">
+                      <li>
+                        Untuk <strong>prediksi harian</strong>, data yang
+                        ditampilkan mencakup <strong>7 hari ke depan</strong>.
+                      </li>
+                      <li>
+                        Untuk <strong>prediksi mingguan</strong>, data yang
+                        ditampilkan mencakup <strong>4 minggu ke depan</strong>.
+                      </li>
+                      <li>
+                        Untuk <strong>prediksi bulanan</strong>, data yang
+                        ditampilkan mencakup <strong>3 bulan ke depan</strong>.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -128,13 +153,9 @@
               <div id="prediction-table-container" class="table-responsive">
                 <table id="prediction-table" class="prediction-table">
                   <thead>
-                    <tr id="table-header">
-                      <!-- Header will be filled by JavaScript -->
-                    </tr>
+                    <tr id="table-header"></tr>
                   </thead>
-                  <tbody id="table-body">
-                    <!-- Data will be filled by JavaScript -->
-                  </tbody>
+                  <tbody id="table-body"></tbody>
                 </table>
               </div>
 
@@ -155,11 +176,9 @@
         const navToggle = document.getElementById("nav-toggle");
         const sidebar = document.getElementById("sidebar");
 
-        // Hamburger menu toggle
         navToggle.addEventListener("click", function () {
           sidebar.classList.toggle("expanded");
 
-          // Change icon based on state
           const icon = this.querySelector("i");
           if (sidebar.classList.contains("expanded")) {
             icon.classList.remove("fa-bars");
@@ -170,7 +189,6 @@
           }
         });
 
-        // Close mobile menu when clicking on a menu item
         const menuItems = document.querySelectorAll(".nav-menu a");
         menuItems.forEach((item) => {
           item.addEventListener("click", function () {
@@ -183,7 +201,6 @@
           });
         });
 
-        // Adjust menu on window resize
         window.addEventListener("resize", function () {
           if (window.innerWidth > 768) {
             sidebar.classList.remove("expanded");
@@ -193,12 +210,9 @@
           }
         });
 
-        // Tampilkan keadaan awal tabel sebagai pengganti memuat data otomatis
         showInitialTableState();
 
-        // Event listeners
         periodSelect.addEventListener("change", function () {
-          // Clear previous results when changing period
           document.getElementById("table-header").innerHTML = "";
           document.getElementById("table-body").innerHTML = "";
           showInitialTableState();
@@ -223,14 +237,11 @@
         );
         const errorElement = document.getElementById("error-message");
 
-        // Sembunyikan loading dan error
         loadingElement.style.display = "none";
         errorElement.style.display = "none";
 
-        // Tampilkan tabel
         tableContainer.style.display = "block";
 
-        // Buat header default
         tableHeader.innerHTML = `
     <th>Tanggal</th>
     <th>Prediksi Penjualan (Rp)</th>
@@ -238,7 +249,6 @@
     <th>Upper Bound (Rp)</th>
   `;
 
-        // Tampilkan pesan instruksi
         tableBody.innerHTML = `
     <tr>
       <td colspan="4" style="text-align: center;">
@@ -256,12 +266,10 @@
         );
         const errorElement = document.getElementById("error-message");
 
-        // Show loading, hide table and error
         loadingElement.style.display = "flex";
         tableContainer.style.display = "none";
         errorElement.style.display = "none";
 
-        // Fetch data from API
         fetch(`/api/ml/predict?period=${period}`, {
           method: "GET",
           headers: {
@@ -279,7 +287,6 @@
               throw new Error(data.error);
             }
 
-            // Check for different response structures and extract prediction data
             let predictions = [];
             if (data.predictions) {
               predictions = data.predictions;
@@ -307,11 +314,9 @@
           "prediction-table-container"
         );
 
-        // Clear table
         tableHeader.innerHTML = "";
         tableBody.innerHTML = "";
 
-        // Create headers based on period
         let headers = [];
 
         if (period === "daily") {
@@ -337,14 +342,12 @@
           ];
         }
 
-        // Fill header
         headers.forEach((headerText) => {
           const th = document.createElement("th");
           th.textContent = headerText;
           tableHeader.appendChild(th);
         });
 
-        // Handle empty data
         if (!data || data.length === 0) {
           const row = document.createElement("tr");
           const cell = document.createElement("td");
@@ -354,12 +357,10 @@
           row.appendChild(cell);
           tableBody.appendChild(row);
         } else {
-          // Fill body based on period type
           data.forEach((item) => {
             const row = document.createElement("tr");
 
             if (period === "daily") {
-              // Handle daily prediction with 4 columns
               const date = item.date || "";
               const prediction = item.prediction || 0;
               const lowerBound = item.lower_bound || 0;
@@ -372,7 +373,6 @@
         <td>${formatCurrency(upperBound)}</td>
       `;
             } else if (period === "weekly") {
-              // Handle weekly prediction with 4 columns
               const week = item.week || item.date || "";
               const prediction = item.prediction || 0;
               const lowerBound = item.lower_bound || 0;
@@ -385,7 +385,6 @@
         <td>${formatCurrency(upperBound)}</td>
       `;
             } else if (period === "monthly") {
-              // Handle monthly prediction with 4 columns
               const month = item.month || item.date || "";
               const prediction = item.prediction || 0;
               const lowerBound = item.lower_bound || 0;
@@ -403,7 +402,6 @@
           });
         }
 
-        // Hide loading, show table
         loadingElement.style.display = "none";
         tableContainer.style.display = "block";
       }
@@ -416,11 +414,11 @@
 
       function formatWeek(weekString) {
         if (!weekString) return "N/A";
-        // If it's already in week format, return as is
+
         if (typeof weekString === "string" && weekString.includes("Minggu")) {
           return weekString;
         }
-        // Format as simple date without range
+
         try {
           const date = new Date(weekString);
           return `${date.getDate()}/${
@@ -433,11 +431,11 @@
 
       function formatMonth(monthString) {
         if (!monthString) return "N/A";
-        // If it's already in month format, return as is
+
         if (typeof monthString === "string" && monthString.length <= 10) {
           try {
             const date = new Date(monthString);
-            // Format as DD/MM/YYYY
+
             return `${String(date.getDate()).padStart(2, "0")}/${String(
               date.getMonth() + 1
             ).padStart(2, "0")}/${date.getFullYear()}`;
@@ -445,7 +443,7 @@
             return monthString;
           }
         }
-        // Otherwise format as month name
+
         try {
           const date = new Date(monthString);
           return `${String(date.getDate()).padStart(2, "0")}/${String(
@@ -465,23 +463,20 @@
       }
 
       function savePrediction() {
-        // Get the current prediction data from the table
         const predictionTable = document.getElementById("prediction-table");
         const periodSelect = document.getElementById("prediction-period");
         const selectedPeriod = periodSelect.value;
+        const accessToken = "{{ token }}";
 
-        // Check if we have prediction data to save
         if (
           !predictionTable ||
           !predictionTable.rows ||
           predictionTable.rows.length <= 1
         ) {
-          // Show error notification
           showNotification("Tidak ada data prediksi untuk disimpan", "error");
           return;
         }
 
-        // Check if the first row contains an instruction message
         const firstDataRow = predictionTable.rows[1];
         if (
           firstDataRow.cells.length === 1 &&
@@ -491,21 +486,17 @@
           return;
         }
 
-        // Collect prediction data from the table
         const predictions = [];
         for (let i = 1; i < predictionTable.rows.length; i++) {
           const row = predictionTable.rows[i];
 
-          // Skip instruction row if present
           if (row.cells.length === 1 && row.cells[0].colSpan > 1) {
             continue;
           }
 
-          // Extract data based on period type
           let prediction = {};
 
           if (selectedPeriod === "daily") {
-            // For daily prediction
             prediction = {
               date: parseDateValue(row.cells[0].textContent),
               prediction: parseCurrencyValue(row.cells[1].textContent),
@@ -513,17 +504,15 @@
               upper_bound: parseCurrencyValue(row.cells[3].textContent),
             };
           } else if (selectedPeriod === "weekly") {
-            // For weekly prediction
             prediction = {
-              date: parseDateValue(row.cells[0].textContent), // Use date as the key instead of week
+              date: parseDateValue(row.cells[0].textContent),
               prediction: parseCurrencyValue(row.cells[1].textContent),
               lower_bound: parseCurrencyValue(row.cells[2].textContent),
               upper_bound: parseCurrencyValue(row.cells[3].textContent),
             };
           } else if (selectedPeriod === "monthly") {
-            // For monthly prediction
             prediction = {
-              date: parseDateValue(row.cells[0].textContent), // Use date as the key instead of month
+              date: parseDateValue(row.cells[0].textContent),
               prediction: parseCurrencyValue(row.cells[1].textContent),
               lower_bound: parseCurrencyValue(row.cells[2].textContent),
               upper_bound: parseCurrencyValue(row.cells[3].textContent),
@@ -533,7 +522,6 @@
           predictions.push(prediction);
         }
 
-        // Convert frequency format
         const frequencyMap = {
           daily: "D",
           weekly: "W",
@@ -542,19 +530,17 @@
 
         const frequency = frequencyMap[selectedPeriod];
 
-        // Prepare data to send to API - match the expected format
         const requestData = {
           frequency: frequency,
           data: predictions,
         };
 
-        // Show loading notification
         showNotification("Menyimpan prediksi...", "loading");
 
-        // Send data to API
         fetch("/api/ml/predict/save", {
           method: "POST",
           headers: {
+            "Authorization": `Bearer ${accessToken}`, 
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestData),
@@ -566,12 +552,11 @@
             return response.json();
           })
           .then((data) => {
-            // Show success notification
             showNotification("Prediksi berhasil disimpan!", "success");
           })
           .catch((error) => {
             console.error("Error saving prediction:", error);
-            // Show error notification
+
             showNotification(
               `Gagal menyimpan prediksi: ${error.message}`,
               "error"
@@ -579,13 +564,10 @@
           });
       }
 
-      // Helper function to parse date values
       function parseDateValue(dateText) {
-        // Try to convert back to API format (YYYY-MM-DD)
         try {
           if (dateText === "N/A") return "";
 
-          // Parse Indonesian date format (DD/MM/YYYY)
           const parts = dateText.split("/");
           if (parts.length === 3) {
             return `${parts[2]}-${parts[1].padStart(
@@ -600,9 +582,7 @@
         }
       }
 
-      // Helper function to parse currency values
       function parseCurrencyValue(currencyText) {
-        // Remove currency symbol and separators, convert to number
         try {
           return parseFloat(
             currencyText.replace(/[^\d,-]/g, "").replace(",", ".")
@@ -612,9 +592,7 @@
         }
       }
 
-      // Function to show notifications with different styles
       function showNotification(message, type = "success") {
-        // Remove existing notifications
         const existingNotifications =
           document.querySelectorAll(".notification");
         existingNotifications.forEach((notification) => {
@@ -626,20 +604,17 @@
           }, 300);
         });
 
-        // Create new notification
         const notification = document.createElement("div");
         notification.className = "notification";
 
-        // Set styles based on notification type
         if (type === "error") {
           notification.style.backgroundColor = "#f44336";
         } else if (type === "loading") {
           notification.style.backgroundColor = "#2196f3";
         } else {
-          notification.style.backgroundColor = "#4caf50"; // success
+          notification.style.backgroundColor = "#4caf50";
         }
 
-        // Set notification icon
         let icon = "check-circle";
         if (type === "error") {
           icon = "exclamation-circle";
@@ -654,7 +629,6 @@
 
         document.body.appendChild(notification);
 
-        // Remove after 3 seconds for success and error notifications
         if (type !== "loading") {
           setTimeout(() => {
             notification.classList.add("notification-hide");

@@ -6,8 +6,8 @@
     <title>Chatbot - Predicto</title>
     <link
       rel="shortcut icon"
-      type="image/png"
-      href="{{ url_for('static', filename='favicon.png') }}"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
     />
     <link
       rel="stylesheet"
@@ -24,7 +24,6 @@
   </head>
   <body>
     <div class="container">
-      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="logo">
           <img
@@ -33,7 +32,6 @@
           />
         </div>
 
-        <!-- Mobile Nav Toggle -->
         <div class="nav-toggle" id="nav-toggle">
           <i class="fas fa-bars"></i>
         </div>
@@ -80,7 +78,6 @@
         </div>
       </aside>
 
-      <!-- Main content -->
       <main class="main-content">
         <header class="top-header">
           <h1>Chatbot</h1>
@@ -96,7 +93,6 @@
         <div class="content-wrapper">
           <div class="chat-container">
             <div class="chat-messages" id="chat-messages">
-              <!-- Messages will be added here -->
               <div class="message bot-message">
                 Halo! Saya adalah asisten Predicto. Apa yang bisa saya bantu
                 hari ini?
@@ -132,13 +128,10 @@
         const navToggle = document.getElementById("nav-toggle");
         const sidebar = document.getElementById("sidebar");
 
-        // Get API URL from Flask backend
-        const API_URL = "{{ url_for('api_chatbot', _external=True) }}";
+        const API_URL = "{{ url_for('api_chatbot', _external=True, _scheme='https') }}";
 
-        // Debug logging
         console.log("Using API URL:", API_URL);
 
-        // Function to format currency values
         function formatCurrency(value) {
           return new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -148,7 +141,6 @@
           }).format(value);
         }
 
-        // Function to format predictions as a table
         function formatPredictions(data) {
           if (
             !data ||
@@ -159,7 +151,7 @@
             return "Maaf, data prediksi tidak tersedia.";
           }
 
-          const type = data.type; // daily, weekly, monthly
+          const type = data.type;
           let timeLabel;
 
           switch (type) {
@@ -184,7 +176,6 @@
               : "Bulanan"
           }</strong></div>`;
 
-          // Tambahkan div dengan class table-responsive untuk pembungkus tabel
           table += `<div class="table-responsive">
               <table class="prediction-table">
                 <tr>
@@ -194,7 +185,6 @@
                 </tr>`;
 
           data.response.forEach((item) => {
-            // Format date/week/month based on type
             let formattedTime;
             const dateValue = item.week || item.month || item.date || "-";
 
@@ -227,11 +217,9 @@
           return table;
         }
 
-        // Hamburger menu toggle
         navToggle.addEventListener("click", function () {
           sidebar.classList.toggle("expanded");
 
-          // Change icon based on state
           const icon = this.querySelector("i");
           if (sidebar.classList.contains("expanded")) {
             icon.classList.remove("fa-bars");
@@ -242,7 +230,6 @@
           }
         });
 
-        // Close mobile menu when clicking on a menu item
         const menuItems = document.querySelectorAll(".nav-menu a");
         menuItems.forEach((item) => {
           item.addEventListener("click", function () {
@@ -255,7 +242,6 @@
           });
         });
 
-        // Adjust menu on window resize
         window.addEventListener("resize", function () {
           if (window.innerWidth > 768) {
             sidebar.classList.remove("expanded");
@@ -265,13 +251,11 @@
           }
         });
 
-        // Function to add message to the chat UI
         function addMessageToChat(message, isUser) {
           const messageDiv = document.createElement("div");
           messageDiv.classList.add("message");
           messageDiv.classList.add(isUser ? "user-message" : "bot-message");
 
-          // Check if the message is an HTML string (for tables)
           if (
             (typeof message === "string" && message.startsWith("<div>")) ||
             message.startsWith("<table>")
@@ -281,35 +265,28 @@
             messageDiv.textContent = message;
           }
 
-          // Insert before typing indicator
           chatMessages.insertBefore(messageDiv, typingIndicator);
 
-          // Scroll to the bottom of the chat
           scrollToBottom();
         }
 
-        // Function to show the typing indicator
         function showTypingIndicator() {
           typingIndicator.style.display = "block";
           scrollToBottom();
         }
 
-        // Function to hide the typing indicator
         function hideTypingIndicator() {
           typingIndicator.style.display = "none";
         }
 
-        // Function to scroll to bottom of chat
         function scrollToBottom() {
           chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Function to send message to the API
         async function sendMessage(message) {
           try {
             showTypingIndicator();
 
-            // Get token from session
             const token = "{{ session.get('access_token', '') }}";
             console.log("Token available:", !!token);
 
@@ -317,7 +294,6 @@
               message: message,
             });
 
-            // Send to API endpoint
             const response = await fetch(API_URL, {
               method: "POST",
               headers: {
@@ -327,7 +303,7 @@
               body: JSON.stringify({
                 message: message,
               }),
-              // Add credentials to ensure cookies are sent
+
               credentials: "same-origin",
             });
 
@@ -343,18 +319,12 @@
             console.log("API response:", data);
 
             if (data) {
-              // Check if this is a prediction result (has a type and response array)
               if (data.type && data.response && Array.isArray(data.response)) {
-                // Format the prediction data as a table
                 const formattedMessage = formatPredictions(data);
                 addMessageToChat(formattedMessage, false);
-              }
-              // Regular text response
-              else if (data.response && typeof data.response === "string") {
+              } else if (data.response && typeof data.response === "string") {
                 addMessageToChat(data.response, false);
-              }
-              // Fallback for other response formats
-              else {
+              } else {
                 addMessageToChat(
                   "Maaf, saya tidak dapat memproses pesan Anda saat ini.",
                   false
@@ -376,7 +346,6 @@
           }
         }
 
-        // Send message when pressing Enter
         chatInput.addEventListener("keypress", function (e) {
           if (e.key === "Enter" && chatInput.value.trim() !== "") {
             const message = chatInput.value.trim();
@@ -386,7 +355,6 @@
           }
         });
 
-        // Send message when clicking send button
         sendButton.addEventListener("click", function () {
           if (chatInput.value.trim() !== "") {
             const message = chatInput.value.trim();
@@ -396,7 +364,6 @@
           }
         });
 
-        // Initial scroll to bottom
         scrollToBottom();
       });
     </script>

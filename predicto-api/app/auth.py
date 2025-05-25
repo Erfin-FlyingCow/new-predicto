@@ -8,6 +8,7 @@ from flask_mail import Message
 from app import mail 
 import re 
 import uuid
+from pytz import timezone, utc
 from flask_jwt_extended import get_jwt, get_jwt_identity
 from app.models import TokenBlacklist
 import time
@@ -70,7 +71,7 @@ def login():
         return jsonify({"message": "Invalid username or password!"}), 401
 
     # Generate JWT token
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=1))
 
     return jsonify({"message": "Login successful", "access_token": access_token}), 200
 
@@ -78,17 +79,31 @@ def login():
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def me():
-    # Mengambil ID pengguna yang sedang login (dari JWT token)
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
 
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
+    # Ambil zona waktu dari header atau default ke UTC
+    client_timezone_str = request.headers.get('X-Timezone', 'UTC')
+
+    try:
+        client_tz = timezone(client_timezone_str)
+    except Exception:
+        return jsonify({"message": "Invalid timezone format!"}), 400
+
+    # Pastikan waktu created_at dalam UTC
+    created_at_utc = user.created_at.replace(tzinfo=utc)
+
+    # Konversi ke zona waktu klien
+    created_at_local = created_at_utc.astimezone(client_tz)
+    created_at_formatted = created_at_local.strftime('%d-%m-%Y / %H:%M:%S %Z')
+
     return jsonify({
         "username": user.username,
         "email": user.email,
-        "created_at": user.created_at
+        "created_at": created_at_formatted
     }), 200
 
 
@@ -116,7 +131,7 @@ def forgot_password():
     db.session.commit()
 
     # Kirim email ke user
-    reset_link = f"{request.host_url}auth/new-password/{reset_token}"
+    reset_link = f"{request.host_url}/reset-password-form/{reset_token}"
     msg = Message(
         subject="Reset Password",
         sender="youremail@gmail.com",
@@ -202,3 +217,4 @@ def logout():
     db.session.add(TokenBlacklist(jti=jti))
     db.session.commit()
     return jsonify({"message": "Logout successful"}), 200
+

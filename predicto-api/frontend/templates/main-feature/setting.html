@@ -6,8 +6,8 @@
     <title>Setting Page - Predicto</title>
     <link
       rel="shortcut icon"
-      type="image/png"
-      href="{{ url_for('static', filename='favicon.png') }}"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
     />
     <link
       rel="stylesheet"
@@ -24,7 +24,6 @@
   </head>
   <body>
     <div class="container">
-      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="logo">
           <img
@@ -33,7 +32,6 @@
           />
         </div>
 
-        <!-- Mobile Nav Toggle -->
         <div class="nav-toggle" id="nav-toggle">
           <i class="fas fa-bars"></i>
         </div>
@@ -80,7 +78,6 @@
         </div>
       </aside>
 
-      <!-- Main content -->
       <main class="main-content">
         <header class="top-header">
           <h1>Setting</h1>
@@ -101,9 +98,6 @@
                   <div class="avatar-container">
                     <i class="fas fa-user"></i>
                   </div>
-                  <!-- <button class="edit-button">
-                    <i class="fas fa-camera"></i> Change Picture
-                  </button> -->
                 </div>
 
                 <div class="profile-info">
@@ -134,11 +128,9 @@
         const navToggle = document.getElementById("nav-toggle");
         const sidebar = document.getElementById("sidebar");
 
-        // Hamburger menu toggle
         navToggle.addEventListener("click", function () {
           sidebar.classList.toggle("expanded");
 
-          // Change icon based on state
           const icon = this.querySelector("i");
           if (sidebar.classList.contains("expanded")) {
             icon.classList.remove("fa-bars");
@@ -149,7 +141,6 @@
           }
         });
 
-        // Close mobile menu when clicking on a menu item
         const menuItems = document.querySelectorAll(".nav-menu a");
         menuItems.forEach((item) => {
           item.addEventListener("click", function () {
@@ -162,7 +153,6 @@
           });
         });
 
-        // Adjust menu on window resize
         window.addEventListener("resize", function () {
           if (window.innerWidth > 768) {
             sidebar.classList.remove("expanded");
