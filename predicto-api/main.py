@@ -428,44 +428,6 @@ def chatbot():
         return redirect(url_for('login'))
     return render_template('main-feature/chatbot.html',token=session['access_token'])
 
-@app.route('/api/chatbot/', methods=['POST'])
-def api_chatbot():
-    if 'access_token' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    try:
-        
-        message = request.json.get('message')
-        
-        if not message:
-            return jsonify({'error': 'No message provided'}), 400
-        
-        
-        headers = {
-            'Authorization': f'Bearer {session["access_token"]}',
-            'Content-Type': 'application/json'
-        }
-        
-        response = requests.post(
-            f'{request.host_url}/api/chatbot/',
-            headers=headers,
-            json={'message': message},
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            return jsonify(response.json())
-        else:
-            return jsonify({
-                'error': 'Error from API', 
-                'status': response.status_code, 
-                'response': 'Maaf, layanan chatbot sedang tidak tersedia.'
-            }), response.status_code
-    except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'response': 'Terjadi kesalahan saat menghubungi server.'
-        }), 500
 
 
 @app.route('/setting', methods=['GET', 'POST'])
