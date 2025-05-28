@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-rules_data_path=os.path.join(BASE_DIR,'chatbot_data','rules_data.json')
+rules_data_path=os.path.join(BASE_DIR,'chatbot_data','rule_data.json')
 historical_data_path=os.path.join(BASE_DIR,'chatbot_data','customer_segmentation_result .csv')
 daily_model=os.path.join(BASE_DIR,'chatbot_data','model_xgb_daily.pkl')
 weekly_model=os.path.join(BASE_DIR,'chatbot_data','stl_attlstm_model_weekly(0.94).h5')
@@ -518,7 +518,6 @@ prediction_rules = {
 }
 
 # Add prediction rules to rule_embeddings and rule_patterns
-# Add prediction rules to rule_embeddings and rule_patterns
 for rule_name, rule_content in prediction_rules.items():
     patterns = rule_content['patterns']
     if patterns:
@@ -527,225 +526,14 @@ for rule_name, rule_content in prediction_rules.items():
         rule_embeddings[rule_name] = embeddings
         rule_patterns[rule_name] = preprocessed_patterns
 
-def extract_keywords(text):
-    """Extract keywords dari text"""
-    keywords = []
-    
-    if nlp:
-        doc = nlp(text.lower())
-        keywords = [token.lemma_ for token in doc if token.pos_ in ['NOUN', 'PROPN', 'ADJ'] and len(token.text) > 2]
-    else:
-        # Basic keyword extraction
-        keywords = [word for word in word_tokenize(text.lower()) if len(word) > 2]
-    
-    return list(set(keywords))
-
-def check_domain_relevance(user_input):
-    """Check apakah input user relevan dengan domain bisnis"""
-    keywords = extract_keywords(user_input)
-    
-    # Hitung score untuk domain yang relevan
-    relevant_score = 0
-    for domain, domain_keywords in DOMAIN_KEYWORDS.items():
-        for keyword in keywords:
-            if any(dk in keyword or keyword in dk for dk in domain_keywords):
-                relevant_score += 1
-    
-    # Hitung score untuk domain yang tidak relevan
-    irrelevant_score = 0
-    for domain, irrelevant_keywords in IRRELEVANT_KEYWORDS.items():
-        for keyword in keywords:
-            if any(ik in keyword or keyword in ik for ik in irrelevant_keywords):
-                irrelevant_score += 2  # Beri weight lebih tinggi untuk irrelevant
-    
-    return relevant_score, irrelevant_score, keywords
-
 def find_best_rule_match(user_input):
-    """Enhanced rule matching dengan context awareness"""
-    
-    # 1. Check domain relevance terlebih dahulu
-    relevant_score, irrelevant_score, extracted_keywords = check_domain_relevance(user_input)
-    
-    print(f"\033[90m[Debug] Keywords: {extracted_keywords}\033[0m")
-    print(f"\033[90m[Debug] Relevant score: {relevant_score}, Irrelevant score: {irrelevant_score}\033[0m")
-
-    out_of_context_keywords = [
-    # Cuaca & Alam
-    'cuaca', 'weather', 'hujan', 'panas', 'dingin', 'angin', 'badai', 'topan',
-    'gempa', 'tsunami', 'banjir', 'kekeringan', 'musim', 'iklim', 'suhu',
-    
-    # Keuangan & Investasi (Non-iPhone)
-    'emas', 'gold', 'perak', 'silver', 'saham', 'stock', 'crypto', 'bitcoin',
-    'ethereum', 'forex', 'mata uang', 'currency', 'rupiah', 'dollar', 'euro',
-    'obligasi', 'reksadana', 'deposito', 'investasi emas', 'trading', 'bursa',
-    'ihsg', 'nasdaq', 'dow jones', 'nikkei', 'hang seng',
-    
-    # Properti & Real Estate
-    'properti', 'real estate', 'tanah', 'rumah', 'apartemen', 'villa', 'ruko',
-    'gedung', 'perkantoran', 'mall', 'hotel', 'resort', 'kost', 'kontrakan',
-    'sewa', 'beli rumah', 'kredit rumah', 'kpr', 'pajak bumi', 'sertifikat',
-    
-    # Otomotif
-    'mobil', 'motor', 'kendaraan', 'otomotif', 'toyota', 'honda', 'suzuki',
-    'yamaha', 'kawasaki', 'bmw', 'mercedes', 'audi', 'ferrari', 'lamborghini',
-    'truck', 'bus', 'sepeda', 'vespa', 'harley', 'bensin', 'solar', 'oli',
-    'ban', 'velg', 'sparepart', 'service', 'bengkel', 'showroom', 'kredit mobil',
-    
-    # Makanan & Kuliner
-    'makanan', 'restoran', 'cafe', 'warung', 'kedai', 'bakso', 'soto', 'rendang',
-    'nasi goreng', 'mie ayam', 'gado-gado', 'satay', 'gudeg', 'rawon', 'sate',
-    'pizza', 'burger', 'sushi', 'ramen', 'pasta', 'steak', 'seafood', 'dimsum',
-    'kopi', 'teh', 'jus', 'smoothie', 'ice cream', 'cake', 'donut', 'cookies',
-    'masak', 'recipe', 'bahan', 'bumbu', 'resep', 'chef', 'cooking',
-    
-    # Travel & Pariwisata
-    'wisata', 'travel', 'liburan', 'vacation', 'holiday', 'pantai', 'gunung',
-    'danau', 'air terjun', 'candi', 'museum', 'taman', 'kebun binatang',
-    'bali', 'jogja', 'bandung', 'malang', 'lombok', 'batam', 'medan', 'surabaya',
-    'singapore', 'malaysia', 'thailand', 'jepang', 'korea', 'eropa', 'amerika',
-    'tiket', 'booking', 'hotel', 'penginapan', 'homestay', 'villa', 'resort',
-    'pesawat', 'kereta', 'bus', 'kapal', 'cruise', 'backpacker', 'tour',
-    
-    # Kesehatan & Medis
-    'kesehatan', 'obat', 'dokter', 'rumah sakit', 'klinik', 'puskesmas',
-    'sakit', 'penyakit', 'flu', 'demam', 'batuk', 'pilek', 'covid', 'virus',
-    'vaksin', 'vitamin', 'suplemen', 'therapy', 'fisioterapi', 'psikolog',
-    'diet', 'olahraga', 'fitness', 'gym', 'yoga', 'senam', 'lari', 'renang',
-    'jantung', 'diabetes', 'hipertensi', 'kolesterol', 'asam urat', 'maag',
-    
-    # Politik & Pemerintahan
-    'politik', 'pemilu', 'pilpres', 'pileg', 'pilkada', 'presiden', 'menteri',
-    'gubernur', 'bupati', 'walikota', 'dpr', 'dprd', 'mpr', 'mahkamah',
-    'pemerintah', 'negara', 'undang-undang', 'peraturan', 'kebijakan',
-    'korupsi', 'kpk', 'polisi', 'tentara', 'tni', 'polri',
-    
-    # Pendidikan (Non-Teknis)
-    'mulyono', 'ukt', 'pnj', 'politeknik negeri jakarta', 'universitas',
-    'sekolah', 'sma', 'smk', 'smp', 'sd', 'tk', 'kuliah', 'kampus',
-    'dosen', 'guru', 'mahasiswa', 'siswa', 'ujian', 'tes', 'skripsi',
-    'thesis', 'nilai', 'ipk', 'beasiswa', 'lomba', 'olimpiade',
-    
-    # Waktu & Tanggal
-    'jam', 'waktu', 'tanggal', 'tahun',
-    'lebaran', 'natal', 'nyepi', 'waisak', 'ramadan', 'puasa', 'sahur',
-    'berbuka', 'mudik', 'libur', 'cuti', 'weekend', 'senin', 'selasa',
-    'rabu', 'kamis', 'jumat', 'sabtu',
-    
-    # Fashion & Clothing
-    'jaket', 'sepatu', 'baju', 'celana', 'rok', 'dress', 'kemeja', 'kaos',
-    'hoodie', 'sweater', 'blazer', 'jas', 'topi', 'tas', 'dompet', 'jam tangan',
-    'gelang', 'kalung', 'cincin', 'anting', 'kacamata', 'sandal', 'boot',
-    'sneakers', 'heels', 'flat shoes', 'brand', 'fashion', 'style', 'trend',
-    'zara', 'h&m', 'uniqlo', 'nike', 'adidas', 'puma', 'converse', 'vans',
-    
-    # Nama Orang (Contoh)
-    'haidar', 'hilmi', 'rayhan', 'budi', 'siti', 'ahmad', 'fitri', 'andi',
-    'dewi', 'rini', 'agus', 'tono', 'wati', 'joko', 'sri', 'dian', 'rina',
-    
-    # Hiburan & Entertainment
-    'spotify', 'netflix', 'youtube', 'instagram', 'facebook', 'twitter',
-    'tiktok', 'whatsapp', 'telegram', 'discord', 'music', 'lagu', 'band',
-    'singer', 'artist', 'concert', 'konser', 'film', 'movie', 'cinema',
-    'bioskop', 'drama', 'series', 'anime', 'manga', 'novel', 'buku',
-    'game', 'gaming', 'ps5', 'xbox', 'nintendo', 'mobile legends', 'pubg',
-    'free fire', 'valorant', 'dota', 'lol', 'fifa', 'pes', 'streaming',
-    
-    # Gadgets & Electronics (Non-iPhone Prediction)
-    'laptop', 'hp', 'handphone', 'samsung', 'xiaomi', 'oppo', 'vivo', 'realme',
-    'huawei', 'oneplus', 'google pixel', 'sony', 'lg', 'nokia', 'blackberry',
-    'tablet', 'ipad', 'computer', 'pc', 'monitor', 'keyboard', 'mouse',
-    'headphone', 'earphone', 'speaker', 'tv', 'smart tv', 'camera', 'drone',
-    'smartwatch', 'fitness tracker', 'powerbank', 'charger', 'cable',
-    'psp', 'nintendo switch', 'playstation', 'xbox', 'gaming chair',
-    
-    # Hobi & Lifestyle
-    'resep', 'ramuan', 'cinta', 'sayang', 'pacaran', 'jodoh', 'nikah',
-    'kawin', 'menikah', 'wedding', 'lamaran', 'tunangan', 'valentine',
-    'anniversary', 'ultah', 'birthday', 'party', 'pesta', 'acara',
-    'foto', 'selfie', 'photography', 'photoshoot', 'video', 'vlog',
-    'blog', 'content', 'influencer', 'selebgram', 'youtuber', 'tiktoker',
-    
-    # Pekerjaan & Profesi
-    'kerja', 'pekerjaan', 'karir', 'job', 'career', 'interview', 'cv',
-    'resume', 'lowongan', 'vacancy', 'hiring', 'recruitment', 'hr',
-    'manager', 'direktur', 'ceo', 'staff', 'karyawan', 'pegawai',
-    'freelance', 'part time', 'full time', 'intern', 'magang', 'gaji',
-    'salary', 'bonus', 'thr', 'cuti', 'resign', 'pensiun',
-    
-    # Agama & Spiritual
-    'agama', 'islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu',
-    'sholat', 'doa', 'dzikir', 'quran', 'bible', 'gereja', 'masjid',
-    'vihara', 'pura', 'klenteng', 'ustadz', 'pastor', 'pendeta', 'biksu',
-    'rohani', 'spiritual', 'meditasi', 'taubat', 'tobat', 'berkah',
-    
-    # Olahraga & Sports
-    'sepakbola', 'basket', 'voli', 'badminton', 'tenis', 'golf', 'boxing',
-    'mma', 'martial arts', 'karate', 'taekwondo', 'silat', 'judo',
-    'atletik', 'renang', 'diving', 'surfing', 'skateboard', 'cycling',
-    'marathon', 'triathlon', 'olimpiade', 'asian games', 'sea games',
-    'liga', 'pertandingan', 'match', 'tournament', 'championship',
-    
-    # Sains & Pengetahuan Umum
-    'fisika', 'kimia', 'biologi', 'matematika', 'sejarah', 'geografi',
-    'astronomi', 'planet', 'bintang', 'galaxy', 'alien', 'ufo',
-    'dinosaurus', 'evolusi', 'dna', 'gen', 'sel', 'virus', 'bakteri',
-    'atom', 'molekul', 'energi', 'gravitasi', 'relativitas', 'quantum',
-    
-    # Supernatural & Mistis
-    'hantu', 'setan', 'jin', 'roh', 'arwah', 'pocong', 'kuntilanak',
-    'sundel bolong', 'leak', 'penanggalan', 'mistis', 'supranatural',
-    'paranormal', 'dukun', 'santet', 'guna-guna', 'pelet', 'susuk',
-    'amulet', 'jimat', 'keris', 'mantra', 'ritual', 'sesajen',
-    
-    # Ekonomi Makro
-    'inflasi', 'deflasi', 'resesi', 'ekonomi', 'pdb', 'gdp', 'imf',
-    'world bank', 'bank indonesia', 'bi rate', 'suku bunga', 'kredit',
-    'kurs', 'ekspor', 'impor', 'neraca', 'surplus', 'defisit',
-    
-    # Transportasi
-    'ojek', 'gojek', 'grab', 'uber', 'taxi', 'angkot', 'metromini',
-    'transjakarta', 'mrt', 'lrt', 'krl', 'commuter line', 'airport',
-    'bandara', 'terminal', 'stasiun', 'pelabuhan', 'toll', 'macet',
-    'traffic', 'parkir', 'bensin', 'premium', 'pertamax', 'solar',
-    
-    # Teknologi Lain (Bukan AI/Prediksi)
-    'blockchain', 'nft', 'metaverse', 'vr', 'iot', 'cloud',
-    'server', 'database', 'sql', 'nosql', 'api', 'backend', 'frontend',
-    'ui', 'ux', 'design', 'photoshop', 'illustrator', 'figma',
-    'wordpress', 'laravel', 'react', 'angular', 'vue', 'node', 'python',
-    'java', 'php', 'javascript', 'html', 'css', 'bootstrap', 'tailwind',
-    
-    # Bahasa Gaul & Slang
-    'anjay', 'mantap', 'keren', 'asik', 'seru', 'gokil', 'ngakak',
-    'baper', 'gabut', 'kepo', 'julid', 'toxic', 'salty', 'haters',
-    'fans', 'stan', 'ship', 'otp', 'bias', 'visual', 'vocal', 'rapper',
-    'dancer', 'idol', 'kpop', 'jpop', 'cpop', 'comeback', 'debut',
-    
-    # Lain-lain
-    'cuci', 'nyuci', 'setrika', 'pel', 'sapu', 'vacuum', 'deterjen',
-    'sabun', 'shampoo', 'pasta gigi', 'sikat gigi', 'tissue', 'tisu',
-    'popok', 'diapers', 'susu', 'bubur', 'biskuit', 'roti', 'mentega',
-    'jam', 'menit', 'detik', 'alarm', 'timer', 'stopwatch', 'kalender',
-    'agenda', 'jadwal', 'appointment', 'meeting', 'rapat', 'presentasi'
-]
-
-    user_lower = user_input.lower()
-    for keyword in out_of_context_keywords:
-        if keyword in user_lower:
-            print(f"\033[90m[Debug] Found out-of-context keyword: {keyword}\033[0m")
-            return 'out_of_scope', 0.0, f"Detected out-of-context keyword: {keyword}"
-    
-    # Jika input jelas-jelas tidak relevan dengan domain bisnis
-    if irrelevant_score > relevant_score and irrelevant_score > 0:
-        return 'out_of_scope', 0.0, "Input tidak relevan dengan domain bisnis"
-    
-    # 2. Preprocess user input
+    # Preprocess user input
     preprocessed_input = preprocess_text(user_input)
     
-    # 3. Calculate embedding for user input
+    # Calculate embedding for user input
     input_embedding = model.encode([preprocessed_input])[0]
     
-    # 4. Find the rule with the highest similarity
+    # Find the rule with the highest similarity
     best_rule = None
     best_similarity = -1
     best_pattern = None
@@ -756,38 +544,14 @@ def find_best_rule_match(user_input):
             if preprocessed_input == pattern:
                 return rule_name, 1.0, pattern
     
-    # Then check for semantic similarity dengan context filtering
-    candidates = []
-    
+    # Then check for semantic similarity
     for rule_name, embeddings in rule_embeddings.items():
         for i, embedding in enumerate(embeddings):
-            similarity = np.dot(input_embedding, embedding) / (
-                np.linalg.norm(input_embedding) * np.linalg.norm(embedding)
-            )
-            
-            # Context-aware filtering
-            pattern_text = rule_patterns[rule_name][i]
-            pattern_keywords = extract_keywords(pattern_text)
-            
-            # Hitung keyword overlap
-            keyword_overlap = len(set(extracted_keywords) & set(pattern_keywords))
-            
-            # Boost similarity jika ada keyword overlap
-            if keyword_overlap > 0:
-                similarity += 0.05 * keyword_overlap  # Small boost
-            
-            candidates.append((rule_name, similarity, rule_patterns[rule_name][i]))
-    
-    # Sort candidates by similarity
-    candidates.sort(key=lambda x: x[1], reverse=True)
-    
-    if candidates:
-        best_rule, best_similarity, best_pattern = candidates[0]
-        
-        # Additional context check untuk prediksi
-        if 'prediction' in best_rule and relevant_score == 0:
-            # Jika match prediction tapi tidak ada context bisnis yang relevan
-            best_similarity *= 0.7  # Reduce confidence
+            similarity = np.dot(input_embedding, embedding) / (np.linalg.norm(input_embedding) * np.linalg.norm(embedding))
+            if similarity > best_similarity:
+                best_similarity = similarity
+                best_rule = rule_name
+                best_pattern = rule_patterns[rule_name][i]
     
     return best_rule, best_similarity, best_pattern
 
@@ -925,8 +689,8 @@ def predict_weekly():
     """Generate weekly sales prediction for next 4 weeks"""
     try:
         if ml_models['weekly'] is None or 'weekly_stl' not in historical_data:
-              print("❌ Error in weekly prediction: model belum tersedia")
-              return "Model mingguan belum tersedia."
+            print("❌ Error in weekly prediction: model belum tersedia")
+            return "Model mingguan belum tersedia."
         
         weekly_df = historical_data['weekly']
         stl_data = historical_data['weekly_stl']
@@ -1256,7 +1020,6 @@ def predict_monthly():
         print(f"❌ Error in monthly prediction: {e}")
         traceback.print_exc()
         return "Terjadi kesalahan saat memproses prediksi bulanan."
-
 
 @chatbot_bp.route('/',methods=['POST'])
 @jwt_required()
