@@ -9,7 +9,8 @@ from flask_mail import Message
 import uuid, json, datetime
 from datetime import datetime, timedelta
 from app.models import User, PasswordResetToken
-from app import mail 
+from app import mail
+
 
 
 # Membuat instance aplikasi
@@ -425,7 +426,7 @@ def chatbot():
     if 'access_token' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('login'))
-    return render_template('main-feature/chatbot.html')
+    return render_template('main-feature/chatbot.html',token=session['access_token'])
 
 @app.route('/api/chatbot/', methods=['POST'])
 def api_chatbot():

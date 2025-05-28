@@ -286,19 +286,20 @@
         async function sendMessage(message) {
           try {
             showTypingIndicator();
-
-            const token = "{{ session.get('access_token', '') }}";
-            console.log("Token available:", !!token);
+            const accessToken = "{{ token }}";
+            console.log("Token available:", !!accessToken);
 
             console.log("Sending to API:", {
               message: message,
             });
-
+            
+            
+            
             const response = await fetch(API_URL, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer {{ session.get('access_token', '') }}`,
+                "Authorization": `Bearer ${accessToken}`,
               },
               body: JSON.stringify({
                 message: message,

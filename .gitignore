@@ -5,4 +5,5 @@ __pycache__/
 # Virtual environment
 venv/
 venv311/
+nama_venv/
 .env/
