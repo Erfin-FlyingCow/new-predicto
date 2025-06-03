@@ -261,7 +261,16 @@
   },
   "features": {
     "patterns": [
+      "fitur website ini apa aja",
+      "apa saja fitur predicto",
+      "fitur website ini",
+      "fitur website",
+      "fitur website predicto apa aja",
+      "fitur website predicto",
+      "fitur platform predicto",
+      "fitur website ini apa aja",
       "fitur predicto",
+      "fitur predicto apa aja",
       "kemampuan predicto",
       "layanan predicto",
       "apa saja fitur predicto",
@@ -319,10 +328,10 @@
       "prediksi menunjukkan penjualan menurun",
       "forecast penjualan turun",
       "forecast menunjukkan penjualan turun",
-      "prediksi iphone turun",
-      "penjualan iphone turun",
-      "penjualan iphone menurun",
-      "prediksi iphone menurun"
+      "prediksi penjualan besok menurun nih",
+      "prediksi besok turun nih",
+      "prediksi minggu depan turun nih",
+      "prediksi bulan depan turun nih"
     ],
     "responses": [
       "Saat penjualan menurun coba strategi berikut: adakan diskon terbatas waktu, tingkatkan pemasaran di media sosial, fokuskan penjualan di jam jam ramai sesuai kondisi."
@@ -330,34 +339,13 @@
   },
   "sales_strategy_rising": {
     "patterns": [
-      "prediksi penjualan naik",
-      "penjualan naik harus apa",
-      "penjualan meningkat gimana",
-      "prediksi naik saya harus apa",
-      "prediksi penjualan meningkat",
-      "penjualan up harus gimana",
-      "penjualan bagus apa yang harus dilakukan",
-      "strategi saat penjualan naik",
-      "strategi penjualan meningkat",
-      "cara memanfaatkan penjualan naik",
-      "cara memanfaatkan penjualan meningkat",
-      "tips penjualan naik",
-      "tips penjualan meningkat",
-      "solusi penjualan naik",
-      "penjualan lagi naik",
-      "penjualan lagi meningkat",
-      "prediksi shows penjualan naik",
-      "hasil prediksi penjualan naik",
-      "hasil prediksi menunjukkan penjualan naik",
-      "prediksi menunjukkan penjualan meningkat",
-      "forecast penjualan naik",
-      "forecast menunjukkan penjualan naik",
-      "prediksi iphone naik",
-      "penjualan iphone naik",
-      "penjualan iphone meningkat",
-      "prediksi iphone meningkat",
-      "penjualan bagus harus apa",
-      "penjualan tinggi harus apa"
+      "strategi peningkatan penjualan",
+      "tips menaikkan omzet",
+      "cara menaikkan penjualan",
+      "langkah strategi penjualan",
+      "prediksi besok naik",
+      "penjualan naik",
+      "prediksi penjualan naik"
     ],
     "responses": [
       "Saat penjualan naik, coba strategi berikut: menambah stok untuk mencegah kehabisan, manfaatkan momen untuk meningkatkan loyalitas pelanggan dengan cashback atau voucher, evaluasi strategi yang berhasil dan pertahankan."
@@ -386,13 +374,13 @@
       "prediksi menunjukkan penjualan konsisten",
       "forecast penjualan stabil",
       "forecast menunjukkan penjualan stabil",
-      "prediksi iphone stabil",
-      "penjualan iphone stabil",
-      "penjualan iphone konsisten",
-      "prediksi iphone konsisten",
       "penjualan normal harus apa",
       "penjualan biasa aja harus apa",
-      "penjualan segitu-gitu aja"
+      "penjualan segitu-gitu aja",
+      "prediksi penjualan besok stabil nih",
+      "prediksi besok stabil nih",
+      "prediksi minggu depan stabil nih",
+      "prediksi bulan depan stabil nih"
     ],
     "responses": [
       "Saat penjualan stabil, coba strategi berikut: meningkatkan variasi promosi, uji coba metode penjualan baru seperti live shopping, analisis waktu dan channel penjualan yang paling efektif."
@@ -531,6 +519,53 @@
     ],
     "responses": [
       "Margin dalam prediksi penjualan adalah nilai selisih antara upper bound dan lower bound yang dibagi dua. Margin ini kemudian ditambahkan ke lower bound untuk mendapatkan nilai prediksi utama. Dengan kata lain, prediksi penjualan adalah nilai tengah dari rentang estimasi, yang dianggap sebagai angka paling representatif dari potensi penjualan."
+    ]
+  },
+  "stock_recommendation": {
+    "patterns": [
+      "stok gimana nih",
+      "saya mau tau stok",
+      "saya pengen tau stok",
+      "saya mau tau stok iphone yang harus di stok",
+      "stok iphone yang harus di stok",
+      "stok iphone yang harus distok",
+      "stok iphone yang perlu distok",
+      "stok iphone yang perlu di stok",
+      "stok iphone apa yang harus distok",
+      "stok iphone apa yang harus di stok",
+      "stok iphone apa yang perlu distok",
+      "stok iphone apa yang perlu di stok",
+      "iphone apa yang harus distok",
+      "iphone apa yang harus di stok",
+      "iphone apa yang perlu distok",
+      "iphone apa yang perlu di stok",
+      "tipe iphone yang harus distok",
+      "tipe iphone yang harus di stok",
+      "tipe iphone yang perlu distok",
+      "tipe iphone yang perlu di stok",
+      "model iphone yang harus distok",
+      "model iphone yang harus di stok",
+      "model iphone yang perlu distok",
+      "model iphone yang perlu di stok",
+      "varian iphone yang harus distok",
+      "varian iphone yang harus di stok",
+      "varian iphone yang perlu distok",
+      "varian iphone yang perlu di stok",
+      "jenis iphone yang harus distok",
+      "jenis iphone yang harus di stok",
+      "jenis iphone yang perlu distok",
+      "jenis iphone yang perlu di stok",
+      "rekomendasi stok iphone",
+      "rekomendasi stock iphone",
+      "saran stok iphone",
+      "saran stock iphone",
+      "anjuran stok iphone",
+      "anjuran stock iphone",
+      "usulan stok iphone",
+      "usulan stock iphone"
+    ],
+    "responses": [
+      "Untuk mengetahui stok iPhone mana yang harus di-stok, silakan Anda berlangganan paket Pro atau Plus terlebih dahulu."
     ]
   },
   "technical_issues": {
@@ -758,20 +793,16 @@
   },
   "engagement": {
     "patterns": [
-      "bantuin saya dong",
-      "bantu saya dong",
       "tolong bantuin dong",
       "tolong bantu dong",
       "mau tanya",
       "mau nanya dong",
-      "saya butuh bantuan",
       "butuh bantuan",
       "bisa dibantu",
       "bisa bantuin",
       "bantuin ya",
       "bantu ya",
       "mohon bantuan",
-      "bantu saya dong predicto",
       "ajarin dong predicto",
       "bisa bantu nggak predicto",
       "minta tolong predicto",

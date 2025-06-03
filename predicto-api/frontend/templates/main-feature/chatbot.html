@@ -128,7 +128,7 @@
         const navToggle = document.getElementById("nav-toggle");
         const sidebar = document.getElementById("sidebar");
 
-        const API_URL = "{{ url_for('chatbot.chatbot', _external=True, _scheme='http') }}";
+        const API_URL = "{{ url_for('api_chatbot', _external=True) }}";
 
         console.log("Using API URL:", API_URL);
 
@@ -286,20 +286,19 @@
         async function sendMessage(message) {
           try {
             showTypingIndicator();
-            const accessToken = "{{ token }}";
-            console.log("Token available:", !!accessToken);
+
+            const token = "{{ session.get('access_token', '') }}";
+            console.log("Token available:", !!token);
 
             console.log("Sending to API:", {
               message: message,
             });
-            
-            
-            
+
             const response = await fetch(API_URL, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
+                Authorization: `Bearer {{ session.get('access_token', '') }}`,
               },
               body: JSON.stringify({
                 message: message,

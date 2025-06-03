@@ -1,577 +1,590 @@
 <!DOCTYPE html>
 <html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Predicto</title>
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='css/dashboard.css')}}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
+        </div>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Predicto</title>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/favicon.ico')}}" type="image/x-icon" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-  <link rel="stylesheet" href="{{url_for('static', filename='css/dashboard.css')}}" />
-</head>
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
 
-<body>
-  <div class="container">
-    <aside class="sidebar" id="sidebar">
-      <div class="logo">
-        <img src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}" alt="Predicto Logo" />
-      </div>
-
-      <div class="nav-toggle" id="nav-toggle">
-        <i class="fas fa-bars"></i>
-      </div>
-
-      <nav class="nav-menu">
-        <ul>
-          <li class="active">
-            <a href="{{ url_for('dashboard') }}">
-              <i class="fas fa-home"></i>
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('prediction') }}">
-              <i class="fas fa-chart-line"></i>
-              <span>Prediction</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('history') }}">
-              <i class="fas fa-history"></i>
-              <span>History Prediction</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('chatbot') }}">
-              <i class="fas fa-comments"></i>
-              <span>Chatbot</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('setting') }}">
-              <i class="fas fa-cog"></i>
-              <span>Setting</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <div class="logout">
-        <a href="{{ url_for('logout') }}">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Logout</span>
-        </a>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="top-header">
-        <h1>Dashboard</h1>
-        <div class="user-profile">
-          <a href="{{ url_for('setting') }}">
-            <div class="profile-circle">
-              <i class="fas fa-user"></i>
-            </div>
+        <nav class="nav-menu">
+          <ul>
+            <li class="active">
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
           </a>
         </div>
-      </header>
+      </aside>
 
-      <div class="content-wrapper">
-        <div class="prediction-cards">
-          <div class="prediction-card">
-            <h2>Prediksi Harian</h2>
-            <div class="chart-container">
-              <canvas id="dailyChart"></canvas>
-            </div>
-          </div>
-          <div class="prediction-card">
-            <h2>Prediksi Mingguan</h2>
-            <div class="chart-container">
-              <canvas id="weeklyChart"></canvas>
-            </div>
-          </div>
-          <div class="prediction-card">
-            <h2>Prediksi Bulanan</h2>
-            <div class="chart-container">
-              <canvas id="monthlyChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="history-section">
-          <div class="history-header">
-            <h2>History Prediction</h2>
-            <a href="{{ url_for('history') }}" class="view-all">
-              Selengkapnya <i class="fas fa-arrow-right"></i>
+      <main class="main-content">
+        <header class="top-header">
+          <h1>Dashboard</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
+              </div>
             </a>
           </div>
-          <div class="history-card">
-            <div class="table-responsive">
-              <table class="history-table">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Tanggal / Waktu Prediksi</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="history-table-body">
-                  <tr>
-                    <td colspan="3" style="text-align: center">
-                      <i class="fas fa-info-circle"></i> Memuat data
-                      history...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+        </header>
+
+        <div class="content-wrapper">
+          <div class="prediction-cards">
+            <div class="prediction-card">
+              <h2>Prediksi Harian</h2>
+              <div class="chart-container">
+                <canvas id="dailyChart"></canvas>
+              </div>
+            </div>
+            <div class="prediction-card">
+              <h2>Prediksi Mingguan</h2>
+              <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+              </div>
+            </div>
+            <div class="prediction-card">
+              <h2>Prediksi Bulanan</h2>
+              <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-section">
+            <div class="history-header">
+              <h2>History Prediction</h2>
+              <a href="{{ url_for('history') }}" class="view-all">
+                Selengkapnya <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+            <div class="history-card">
+              <div class="table-responsive">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Tanggal / Waktu Prediksi</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-table-body">
+                    <tr>
+                      <td colspan="3" style="text-align: center">
+                        <i class="fas fa-info-circle"></i> Memuat data
+                        history...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
-  </div>
+      </main>
+    </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const navToggle = document.getElementById("nav-toggle");
-      const sidebar = document.getElementById("sidebar");
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
 
-      navToggle.addEventListener("click", function () {
-        sidebar.classList.toggle("expanded");
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
 
-        const icon = this.querySelector("i");
-        if (sidebar.classList.contains("expanded")) {
-          icon.classList.remove("fa-bars");
-          icon.classList.add("fa-times");
-        } else {
-          icon.classList.remove("fa-times");
-          icon.classList.add("fa-bars");
-        }
-      });
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
 
-      const menuItems = document.querySelectorAll(".nav-menu a");
-      menuItems.forEach((item) => {
-        item.addEventListener("click", function () {
-          if (window.innerWidth <= 768) {
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
             sidebar.classList.remove("expanded");
             const icon = navToggle.querySelector("i");
             icon.classList.remove("fa-times");
             icon.classList.add("fa-bars");
           }
         });
-      });
 
-      window.addEventListener("resize", function () {
-        if (window.innerWidth > 768) {
-          sidebar.classList.remove("expanded");
-          const icon = navToggle.querySelector("i");
-          icon.classList.remove("fa-times");
-          icon.classList.add("fa-bars");
+        loadChartData();
+        loadHistoryData();
+
+        function adjustChartOptionsForMobile() {
+          const isMobile = window.innerWidth <= 480;
+          const isVerySmall = window.innerWidth <= 350;
+
+          const charts = document.querySelectorAll("canvas");
+
+          charts.forEach((canvas) => {
+            const chart = Chart.getChart(canvas);
+            if (!chart) return;
+
+            if (isMobile) {
+              chart.options.plugins.legend.labels.font = {
+                size: isVerySmall ? 8 : 10,
+              };
+
+              chart.options.plugins.legend.position = "bottom";
+
+              chart.options.plugins.tooltip.titleFont = {
+                size: isVerySmall ? 10 : 12,
+              };
+
+              chart.options.plugins.tooltip.bodyFont = {
+                size: isVerySmall ? 9 : 11,
+              };
+
+              if (chart.options.scales && chart.options.scales.y) {
+                chart.options.scales.y.ticks.font = {
+                  size: isVerySmall ? 8 : 10,
+                };
+              }
+
+              if (chart.options.scales && chart.options.scales.x) {
+                chart.options.scales.x.ticks.font = {
+                  size: isVerySmall ? 8 : 10,
+                };
+
+                chart.options.scales.x.ticks.maxRotation = 90;
+                chart.options.scales.x.ticks.minRotation = 45;
+              }
+            } else {
+              chart.options.plugins.legend.labels.font = {
+                size: 12,
+              };
+
+              chart.options.plugins.legend.position = "top";
+
+              chart.options.plugins.tooltip.titleFont = {
+                size: 14,
+              };
+
+              chart.options.plugins.tooltip.bodyFont = {
+                size: 13,
+              };
+
+              if (chart.options.scales && chart.options.scales.y) {
+                chart.options.scales.y.ticks.font = {
+                  size: 12,
+                };
+              }
+
+              if (chart.options.scales && chart.options.scales.x) {
+                chart.options.scales.x.ticks.font = {
+                  size: 12,
+                };
+                chart.options.scales.x.ticks.maxRotation = 45;
+                chart.options.scales.x.ticks.minRotation = 0;
+              }
+            }
+
+            chart.update();
+          });
         }
-      });
 
-      loadChartData();
-      loadHistoryData();
-
-      function adjustChartOptionsForMobile() {
-        const isMobile = window.innerWidth <= 480;
-        const isVerySmall = window.innerWidth <= 350;
-
-        const charts = document.querySelectorAll("canvas");
-
-        charts.forEach((canvas) => {
-          const chart = Chart.getChart(canvas);
-          if (!chart) return;
-
-          if (isMobile) {
-            chart.options.plugins.legend.labels.font = {
-              size: isVerySmall ? 8 : 10,
-            };
-
-            chart.options.plugins.legend.position = "bottom";
-
-            chart.options.plugins.tooltip.titleFont = {
-              size: isVerySmall ? 10 : 12,
-            };
-
-            chart.options.plugins.tooltip.bodyFont = {
-              size: isVerySmall ? 9 : 11,
-            };
-
-            if (chart.options.scales && chart.options.scales.y) {
-              chart.options.scales.y.ticks.font = {
-                size: isVerySmall ? 8 : 10,
-              };
-            }
-
-            if (chart.options.scales && chart.options.scales.x) {
-              chart.options.scales.x.ticks.font = {
-                size: isVerySmall ? 8 : 10,
-              };
-
-              chart.options.scales.x.ticks.maxRotation = 90;
-              chart.options.scales.x.ticks.minRotation = 45;
-            }
-          } else {
-            chart.options.plugins.legend.labels.font = {
-              size: 12,
-            };
-
-            chart.options.plugins.legend.position = "top";
-
-            chart.options.plugins.tooltip.titleFont = {
-              size: 14,
-            };
-
-            chart.options.plugins.tooltip.bodyFont = {
-              size: 13,
-            };
-
-            if (chart.options.scales && chart.options.scales.y) {
-              chart.options.scales.y.ticks.font = {
-                size: 12,
-              };
-            }
-
-            if (chart.options.scales && chart.options.scales.x) {
-              chart.options.scales.x.ticks.font = {
-                size: 12,
-              };
-              chart.options.scales.x.ticks.maxRotation = 45;
-              chart.options.scales.x.ticks.minRotation = 0;
-            }
-          }
-
-          chart.update();
-        });
-      }
-
-      adjustChartOptionsForMobile();
-
-      window.addEventListener("resize", function () {
         adjustChartOptionsForMobile();
-      });
 
-      function handleTableResponsiveness() {
-        const tables = document.querySelectorAll(".history-table");
-        const isMobile = window.innerWidth <= 480;
+        window.addEventListener("resize", function () {
+          adjustChartOptionsForMobile();
+        });
 
-        tables.forEach((table) => {
-          const headerRow = table.querySelector("thead tr");
-          const dataRows = table.querySelectorAll("tbody tr");
+        function handleTableResponsiveness() {
+          const tables = document.querySelectorAll(".history-table");
+          const isMobile = window.innerWidth <= 480;
 
-          if (isMobile) {
-            if (headerRow) {
-              const headers = headerRow.querySelectorAll("th");
+          tables.forEach((table) => {
+            const headerRow = table.querySelector("thead tr");
+            const dataRows = table.querySelectorAll("tbody tr");
 
-              dataRows.forEach((row) => {
-                const cells = row.querySelectorAll("td");
-                cells.forEach((cell, index) => {
-                  if (headers[index]) {
-                    cell.setAttribute(
-                      "data-label",
-                      headers[index].textContent.trim()
-                    );
-                  }
+            if (isMobile) {
+              if (headerRow) {
+                const headers = headerRow.querySelectorAll("th");
+
+                dataRows.forEach((row) => {
+                  const cells = row.querySelectorAll("td");
+                  cells.forEach((cell, index) => {
+                    if (headers[index]) {
+                      cell.setAttribute(
+                        "data-label",
+                        headers[index].textContent.trim()
+                      );
+                    }
+                  });
                 });
-              });
+              }
             }
-          }
-        });
-      }
+          });
+        }
 
-      handleTableResponsiveness();
-      window.addEventListener("resize", handleTableResponsiveness);
-    });
-
-    function loadChartData() {
-      fetch("/api/ml/predict?period=daily")
-        .then((response) => response.json())
-        .then((data) => {
-          const predictions = data.predictions || data.data || data;
-          renderDailyChart(predictions);
-        })
-        .catch((error) => {
-          console.error("Error loading daily prediction data:", error);
-          renderEmptyChart("dailyChart", "Failed to load daily data");
-        });
-
-      fetch("/api/ml/predict?period=weekly")
-        .then((response) => response.json())
-        .then((data) => {
-          const predictions = data.predictions || data.data || data;
-          renderWeeklyChart(predictions);
-        })
-        .catch((error) => {
-          console.error("Error loading weekly prediction data:", error);
-          renderEmptyChart("weeklyChart", "Failed to load weekly data");
-        });
-
-      fetch("/api/ml/predict?period=monthly")
-        .then((response) => response.json())
-        .then((data) => {
-          const predictions = data.predictions || data.data || data;
-          renderMonthlyChart(predictions);
-        })
-        .catch((error) => {
-          console.error("Error loading monthly prediction data:", error);
-          renderEmptyChart("monthlyChart", "Failed to load monthly data");
-        });
-    }
-
-    function renderDailyChart(predictions) {
-      if (!predictions || predictions.length === 0) {
-        renderEmptyChart("dailyChart", "No daily prediction data available");
-        return;
-      }
-
-      const labels = predictions.map((item) => formatDate(item.date));
-      const predictionData = predictions.map((item) => item.prediction);
-      const lowerBoundData = predictions.map((item) => item.lower_bound);
-      const upperBoundData = predictions.map((item) => item.upper_bound);
-
-      const ctx = document.getElementById("dailyChart").getContext("2d");
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Prediksi Penjualan",
-              data: predictionData,
-              borderColor: "#2196f3",
-              backgroundColor: "rgba(33, 150, 243, 0.1)",
-              borderWidth: 2,
-              tension: 0.4,
-              fill: false,
-            },
-            {
-              label: "Lower Bound",
-              data: lowerBoundData,
-              borderColor: "rgba(33, 150, 243, 0.3)",
-              backgroundColor: "transparent",
-              borderWidth: 1,
-              borderDash: [5, 5],
-              tension: 0.4,
-              fill: false,
-            },
-            {
-              label: "Upper Bound",
-              data: upperBoundData,
-              borderColor: "rgba(33, 150, 243, 0.3)",
-              backgroundColor: "transparent",
-              borderWidth: 1,
-              borderDash: [5, 5],
-              tension: 0.4,
-              fill: "-1",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "top",
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  let label = context.dataset.label || "";
-                  if (label) {
-                    label += ": ";
-                  }
-                  if (context.parsed.y !== null) {
-                    label += formatCurrency(context.parsed.y);
-                  }
-                  return label;
-                },
-              },
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function (value) {
-                  return formatCompactCurrency(value);
-                },
-              },
-            },
-          },
-        },
+        handleTableResponsiveness();
+        window.addEventListener("resize", handleTableResponsiveness);
       });
-    }
 
-    function renderWeeklyChart(predictions) {
-      if (!predictions || predictions.length === 0) {
-        renderEmptyChart(
-          "weeklyChart",
-          "No weekly prediction data available"
+      function loadChartData() {
+        fetch("/api/ml/predict?period=daily")
+          .then((response) => response.json())
+          .then((data) => {
+            const predictions = data.predictions || data.data || data;
+            renderDailyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading daily prediction data:", error);
+            renderEmptyChart("dailyChart", "Failed to load daily data");
+          });
+
+        fetch("/api/ml/predict?period=weekly")
+          .then((response) => response.json())
+          .then((data) => {
+            const predictions = data.predictions || data.data || data;
+            renderWeeklyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading weekly prediction data:", error);
+            renderEmptyChart("weeklyChart", "Failed to load weekly data");
+          });
+
+        fetch("/api/ml/predict?period=monthly")
+          .then((response) => response.json())
+          .then((data) => {
+            const predictions = data.predictions || data.data || data;
+            renderMonthlyChart(predictions);
+          })
+          .catch((error) => {
+            console.error("Error loading monthly prediction data:", error);
+            renderEmptyChart("monthlyChart", "Failed to load monthly data");
+          });
+      }
+
+      function renderDailyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart("dailyChart", "No daily prediction data available");
+          return;
+        }
+
+        const labels = predictions.map((item) => formatDate(item.date));
+        const predictionData = predictions.map((item) => item.prediction);
+        const lowerBoundData = predictions.map((item) => item.lower_bound);
+        const upperBoundData = predictions.map((item) => item.upper_bound);
+
+        const ctx = document.getElementById("dailyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                borderColor: "#2196f3",
+                backgroundColor: "rgba(33, 150, 243, 0.1)",
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+              },
+              {
+                label: "Lower Bound",
+                data: lowerBoundData,
+                borderColor: "rgba(33, 150, 243, 0.3)",
+                backgroundColor: "transparent",
+                borderWidth: 1,
+                borderDash: [5, 5],
+                tension: 0.4,
+                fill: false,
+              },
+              {
+                label: "Upper Bound",
+                data: upperBoundData,
+                borderColor: "rgba(33, 150, 243, 0.3)",
+                backgroundColor: "transparent",
+                borderWidth: 1,
+                borderDash: [5, 5],
+                tension: 0.4,
+                fill: "-1",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderWeeklyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart(
+            "weeklyChart",
+            "No weekly prediction data available"
+          );
+          return;
+        }
+
+        const labels = predictions.map((item) =>
+          formatWeek(item.week || item.date)
         );
-        return;
+        const predictionData = predictions.map((item) => item.prediction);
+
+        const ctx = document.getElementById("weeklyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                backgroundColor: "rgba(33, 150, 243, 0.7)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
       }
 
-      const labels = predictions.map((item) =>
-        formatWeek(item.week || item.date)
-      );
-      const predictionData = predictions.map((item) => item.prediction);
+      function renderMonthlyChart(predictions) {
+        if (!predictions || predictions.length === 0) {
+          renderEmptyChart(
+            "monthlyChart",
+            "No monthly prediction data available"
+          );
+          return;
+        }
 
-      const ctx = document.getElementById("weeklyChart").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Prediksi Penjualan",
-              data: predictionData,
-              backgroundColor: "rgba(33, 150, 243, 0.7)",
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "top",
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  let label = context.dataset.label || "";
-                  if (label) {
-                    label += ": ";
-                  }
-                  if (context.parsed.y !== null) {
-                    label += formatCurrency(context.parsed.y);
-                  }
-                  return label;
-                },
-              },
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function (value) {
-                  return formatCompactCurrency(value);
-                },
-              },
-            },
-          },
-        },
-      });
-    }
-
-    function renderMonthlyChart(predictions) {
-      if (!predictions || predictions.length === 0) {
-        renderEmptyChart(
-          "monthlyChart",
-          "No monthly prediction data available"
+        const labels = predictions.map((item) =>
+          formatMonth(item.month || item.date)
         );
-        return;
+        const predictionData = predictions.map((item) => item.prediction);
+
+        const ctx = document.getElementById("monthlyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Prediksi Penjualan",
+                data: predictionData,
+                backgroundColor: "rgba(76, 175, 80, 0.7)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += formatCurrency(context.parsed.y);
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    return formatCompactCurrency(value);
+                  },
+                },
+              },
+            },
+          },
+        });
       }
 
-      const labels = predictions.map((item) =>
-        formatMonth(item.month || item.date)
-      );
-      const predictionData = predictions.map((item) => item.prediction);
-
-      const ctx = document.getElementById("monthlyChart").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Prediksi Penjualan",
-              data: predictionData,
-              backgroundColor: "rgba(76, 175, 80, 0.7)",
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "top",
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  let label = context.dataset.label || "";
-                  if (label) {
-                    label += ": ";
-                  }
-                  if (context.parsed.y !== null) {
-                    label += formatCurrency(context.parsed.y);
-                  }
-                  return label;
+      function renderEmptyChart(chartId, message) {
+        const ctx = document.getElementById(chartId).getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: [""],
+            datasets: [],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: message,
+                font: {
+                  size: 16,
                 },
               },
             },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function (value) {
-                  return formatCompactCurrency(value);
-                },
+            scales: {
+              x: {
+                display: false,
+              },
+              y: {
+                display: false,
               },
             },
           },
-        },
-      });
-    }
+        });
+      }
 
-    function renderEmptyChart(chartId, message) {
-      const ctx = document.getElementById(chartId).getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: [""],
-          datasets: [],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false,
-            },
-            title: {
-              display: true,
-              text: message,
-              font: {
-                size: 16,
-              },
-            },
-          },
-          scales: {
-            x: {
-              display: false,
-            },
-            y: {
-              display: false,
-            },
-          },
-        },
-      });
-    }
+      function loadHistoryData() {
+        const historyTableBody = document.getElementById("history-table-body");
 
-    function loadHistoryData() {
-      const historyTableBody = document.getElementById("history-table-body");
-      const accessToken = "{{ token }}";
-
-      historyTableBody.innerHTML = `
+        historyTableBody.innerHTML = `
     <tr>
       <td colspan="3" style="text-align: center">
         <i class="fas fa-spinner fa-spin"></i> Memuat data history...
@@ -579,87 +592,81 @@
     </tr>
   `;
 
-      fetch("/api/ml/predict/histories", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,  // pastikan accessToken valid
-          "Content-Type": "application/json"
-        }
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Network response error: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          const histories =
-            data && data.histories
-              ? data.histories
-              : Array.isArray(data)
+        fetch("/api/ml/predict/histories")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Network response error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            const histories =
+              data && data.histories
+                ? data.histories
+                : Array.isArray(data)
                 ? data
                 : [];
 
-          if (histories && Array.isArray(histories) && histories.length > 0) {
-            const sortedHistories = [...histories].sort((a, b) => {
-              const dateA = getDateFromItem(a);
-              const dateB = getDateFromItem(b);
-              return new Date(dateB) - new Date(dateA);
-            });
+            if (histories && Array.isArray(histories) && histories.length > 0) {
+              const sortedHistories = [...histories].sort((a, b) => {
+                const dateA = getDateFromItem(a);
+                const dateB = getDateFromItem(b);
+                return new Date(dateB) - new Date(dateA);
+              });
 
-            const recentHistories = sortedHistories.slice(0, 5);
+              const recentHistories = sortedHistories.slice(0, 5);
 
-            renderHistoryTable(recentHistories);
-          } else {
-            historyTableBody.innerHTML = `
+              renderHistoryTable(recentHistories);
+            } else {
+              historyTableBody.innerHTML = `
           <tr>
             <td colspan="3" style="text-align: center">
               <i class="fas fa-info-circle"></i> Tidak ada data history prediksi
             </td>
           </tr>
         `;
-          }
-        })
-        .catch((error) => {
-          console.error("Error loading history data:", error);
-          historyTableBody.innerHTML = `
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading history data:", error);
+            historyTableBody.innerHTML = `
         <tr>
           <td colspan="3" style="text-align: center">
             <i class="fas fa-exclamation-circle"></i> Gagal memuat data history
           </td>
         </tr>
       `;
-        });
-    }
-
-    function getDateFromItem(item) {
-      const possibleDateFields = [
-        "prediction_date",
-        "prediction_at",
-        "date",
-        "created_at",
-      ];
-      for (const field of possibleDateFields) {
-        if (item[field]) {
-          return item[field];
-        }
+          });
       }
-      return new Date().toISOString();
-    }
 
-    function renderHistoryTable(historyData) {
-      const historyTableBody = document.getElementById("history-table-body");
-      historyTableBody.innerHTML = "";
+      function getDateFromItem(item) {
+        const possibleDateFields = [
+          "prediction_date",
+          "prediction_at",
+          "date",
+          "created_at",
+        ];
+        for (const field of possibleDateFields) {
+          if (item[field]) {
+            return item[field];
+          }
+        }
+        return new Date().toISOString();
+      }
 
-      historyData.forEach((item, index) => {
-        const sequentialNumber = index + 1;
+      function renderHistoryTable(historyData) {
+        const historyTableBody = document.getElementById("history-table-body");
+        historyTableBody.innerHTML = "";
 
-        let dateValue = getDateFromItem(item);
+        historyData.forEach((item, index) => {
+          const sequentialNumber = index + 1;
 
-        const formattedDate = formatDateConsistent(dateValue);
+          let dateValue = getDateFromItem(item);
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
+          const formattedDate = formatDateConsistent(dateValue);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
       <td>${sequentialNumber}</td>
       <td>${formattedDate}</td>
       <td>
@@ -668,56 +675,67 @@
         </button>
       </td>
     `;
-        historyTableBody.appendChild(row);
-      });
-    }
-
-    function viewHistoryDetail(id) {
-      window.location.href = `/history/detail?id=${id}`;
-    }
-
-    function formatDateConsistent(dateString) {
-      if (!dateString) return "N/A";
-
-      const date = new Date(dateString);
-      if (isNaN(date)) return dateString;
-
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-
-      return `${day}/${month}/${year}`;
-    }
-
-    function formatDate(dateString) {
-      if (!dateString) return "N/A";
-      const options = { year: "numeric", month: "numeric", day: "numeric" };
-      return new Date(dateString).toLocaleDateString("id-ID", options);
-    }
-
-    function formatWeek(weekString) {
-      if (!weekString) return "N/A";
-
-      if (typeof weekString === "string" && weekString.includes("Minggu")) {
-        return weekString;
+          historyTableBody.appendChild(row);
+        });
       }
 
-      try {
-        const date = new Date(weekString);
-        return `${date.getDate()}/${date.getMonth() + 1
+      function viewHistoryDetail(id) {
+        window.location.href = `/history/detail?id=${id}`;
+      }
+
+      function formatDateConsistent(dateString) {
+        if (!dateString) return "N/A";
+
+        const date = new Date(dateString);
+        if (isNaN(date)) return dateString;
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
+        const options = { year: "numeric", month: "numeric", day: "numeric" };
+        return new Date(dateString).toLocaleDateString("id-ID", options);
+      }
+
+      function formatWeek(weekString) {
+        if (!weekString) return "N/A";
+
+        if (typeof weekString === "string" && weekString.includes("Minggu")) {
+          return weekString;
+        }
+
+        try {
+          const date = new Date(weekString);
+          return `${date.getDate()}/${
+            date.getMonth() + 1
           }/${date.getFullYear()}`;
-      } catch (e) {
-        return weekString;
+        } catch (e) {
+          return weekString;
+        }
       }
-    }
 
-    function formatMonth(monthString) {
-      if (!monthString) return "N/A";
+      function formatMonth(monthString) {
+        if (!monthString) return "N/A";
 
-      if (typeof monthString === "string" && monthString.length <= 10) {
+        if (typeof monthString === "string" && monthString.length <= 10) {
+          try {
+            const date = new Date(monthString);
+
+            return `${String(date.getDate()).padStart(2, "0")}/${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}/${date.getFullYear()}`;
+          } catch (e) {
+            return monthString;
+          }
+        }
+
         try {
           const date = new Date(monthString);
-
           return `${String(date.getDate()).padStart(2, "0")}/${String(
             date.getMonth() + 1
           ).padStart(2, "0")}/${date.getFullYear()}`;
@@ -726,35 +744,24 @@
         }
       }
 
-      try {
-        const date = new Date(monthString);
-        return `${String(date.getDate()).padStart(2, "0")}/${String(
-          date.getMonth() + 1
-        ).padStart(2, "0")}/${date.getFullYear()}`;
-      } catch (e) {
-        return monthString;
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(value);
       }
-    }
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(value);
-    }
-
-    function formatCompactCurrency(value) {
-      if (value >= 1000000000) {
-        return "Rp" + (value / 1000000000).toFixed(1) + " M";
-      } else if (value >= 1000000) {
-        return "Rp" + (value / 1000000).toFixed(1) + " Jt";
-      } else if (value >= 1000) {
-        return "Rp" + (value / 1000).toFixed(1) + " Rb";
+      function formatCompactCurrency(value) {
+        if (value >= 1000000000) {
+          return "Rp" + (value / 1000000000).toFixed(1) + " M";
+        } else if (value >= 1000000) {
+          return "Rp" + (value / 1000000).toFixed(1) + " Jt";
+        } else if (value >= 1000) {
+          return "Rp" + (value / 1000).toFixed(1) + " Rb";
+        }
+        return "Rp" + value;
       }
-      return "Rp" + value;
-    }
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>

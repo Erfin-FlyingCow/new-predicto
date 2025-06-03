@@ -1,377 +1,387 @@
 <!DOCTYPE html>
 <html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>History Prediction - Predicto</title>
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='assets/favicon.ico')}}"
+      type="image/x-icon"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/history-prediction.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar" id="sidebar">
+        <div class="logo">
+          <img
+            src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}"
+            alt="Predicto Logo"
+          />
+        </div>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>History Prediction - Predicto</title>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/favicon.ico')}}" type="image/x-icon" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/history-prediction.css') }}" />
-</head>
+        <div class="nav-toggle" id="nav-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
 
-<body>
-  <div class="container">
-    <aside class="sidebar" id="sidebar">
-      <div class="logo">
-        <img src="{{ url_for('static', filename='assets/logo-predicto-no-bg.png') }}" alt="Predicto Logo" />
-      </div>
-
-      <div class="nav-toggle" id="nav-toggle">
-        <i class="fas fa-bars"></i>
-      </div>
-
-      <nav class="nav-menu">
-        <ul>
-          <li>
-            <a href="{{ url_for('dashboard') }}">
-              <i class="fas fa-home"></i>
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('prediction') }}">
-              <i class="fas fa-chart-line"></i>
-              <span>Prediction</span>
-            </a>
-          </li>
-          <li class="active">
-            <a href="{{ url_for('history') }}">
-              <i class="fas fa-history"></i>
-              <span>History Prediction</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('chatbot') }}">
-              <i class="fas fa-comments"></i>
-              <span>Chatbot</span>
-            </a>
-          </li>
-          <li>
-            <a href="{{ url_for('setting') }}">
-              <i class="fas fa-cog"></i>
-              <span>Setting</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <div class="logout">
-        <a href="{{ url_for('logout') }}">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Logout</span>
-        </a>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="top-header">
-        <h1>History Prediction</h1>
-        <div class="user-profile">
-          <a href="{{ url_for('setting') }}">
-            <div class="profile-circle">
-              <i class="fas fa-user"></i>
-            </div>
+        <nav class="nav-menu">
+          <ul>
+            <li>
+              <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('prediction') }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Prediction</span>
+              </a>
+            </li>
+            <li class="active">
+              <a href="{{ url_for('history') }}">
+                <i class="fas fa-history"></i>
+                <span>History Prediction</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('chatbot') }}">
+                <i class="fas fa-comments"></i>
+                <span>Chatbot</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('setting') }}">
+                <i class="fas fa-cog"></i>
+                <span>Setting</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="logout">
+          <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
           </a>
         </div>
-      </header>
+      </aside>
 
-      <div class="content-wrapper">
-        <section class="history-section">
-          <div class="history-card">
-            <h2>Tabel History Prediction</h2>
-
-            <div class="table-responsive">
-              <div id="loading-state" class="loading-state">
-                <div class="loading-spinner"></div>
-                <p>Mengambil data riwayat prediksi...</p>
+      <main class="main-content">
+        <header class="top-header">
+          <h1>History Prediction</h1>
+          <div class="user-profile">
+            <a href="{{ url_for('setting') }}">
+              <div class="profile-circle">
+                <i class="fas fa-user"></i>
               </div>
-
-              <div id="error-state" class="error-state" style="display: none">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat data riwayat prediksi.</p>
-                <button class="action-button detail-button" onclick="fetchPredictionHistory()">
-                  <i class="fas fa-redo"></i> Coba Lagi
-                </button>
-              </div>
-
-              <div id="empty-state" class="empty-state" style="display: none">
-                <i class="fas fa-history"></i>
-                <p>
-                  Belum ada riwayat prediksi. Lakukan prediksi terlebih
-                  dahulu.
-                </p>
-              </div>
-
-              <table id="history-table" class="history-table" style="display: none">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Tanggal / Waktu Prediksi</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="history-data"></tbody>
-              </table>
-            </div>
+            </a>
           </div>
-        </section>
-      </div>
-    </main>
-  </div>
+        </header>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const navToggle = document.getElementById("nav-toggle");
-      const sidebar = document.getElementById("sidebar");
+        <div class="content-wrapper">
+          <section class="history-section">
+            <div class="history-card">
+              <h2>Tabel History Prediction</h2>
 
-      navToggle.addEventListener("click", function () {
-        sidebar.classList.toggle("expanded");
+              <div class="table-responsive">
+                <div id="loading-state" class="loading-state">
+                  <div class="loading-spinner"></div>
+                  <p>Mengambil data riwayat prediksi...</p>
+                </div>
 
-        const icon = this.querySelector("i");
-        if (sidebar.classList.contains("expanded")) {
-          icon.classList.remove("fa-bars");
-          icon.classList.add("fa-times");
-        } else {
-          icon.classList.remove("fa-times");
-          icon.classList.add("fa-bars");
-        }
-      });
+                <div id="error-state" class="error-state" style="display: none">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p>Gagal memuat data riwayat prediksi.</p>
+                  <button
+                    class="action-button detail-button"
+                    onclick="fetchPredictionHistory()"
+                  >
+                    <i class="fas fa-redo"></i> Coba Lagi
+                  </button>
+                </div>
 
-      const menuItems = document.querySelectorAll(".nav-menu a");
-      menuItems.forEach((item) => {
-        item.addEventListener("click", function () {
-          if (window.innerWidth <= 768) {
+                <div id="empty-state" class="empty-state" style="display: none">
+                  <i class="fas fa-history"></i>
+                  <p>
+                    Belum ada riwayat prediksi. Lakukan prediksi terlebih
+                    dahulu.
+                  </p>
+                </div>
+
+                <table
+                  id="history-table"
+                  class="history-table"
+                  style="display: none"
+                >
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Tanggal / Waktu Prediksi</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-data"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const navToggle = document.getElementById("nav-toggle");
+        const sidebar = document.getElementById("sidebar");
+
+        navToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("expanded");
+
+          const icon = this.querySelector("i");
+          if (sidebar.classList.contains("expanded")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+          } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
+          }
+        });
+
+        const menuItems = document.querySelectorAll(".nav-menu a");
+        menuItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            if (window.innerWidth <= 768) {
+              sidebar.classList.remove("expanded");
+              const icon = navToggle.querySelector("i");
+              icon.classList.remove("fa-times");
+              icon.classList.add("fa-bars");
+            }
+          });
+        });
+
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 768) {
             sidebar.classList.remove("expanded");
             const icon = navToggle.querySelector("i");
             icon.classList.remove("fa-times");
             icon.classList.add("fa-bars");
           }
         });
+
+        fetchPredictionHistory();
       });
 
-      window.addEventListener("resize", function () {
-        if (window.innerWidth > 768) {
-          sidebar.classList.remove("expanded");
-          const icon = navToggle.querySelector("i");
-          icon.classList.remove("fa-times");
-          icon.classList.add("fa-bars");
-        }
-      });
+      function formatDate(dateString) {
+        if (!dateString) return "N/A";
 
-      fetchPredictionHistory();
-    });
+        const date = new Date(dateString);
+        if (isNaN(date)) return dateString;
 
-    function formatDate(dateString) {
-      if (!dateString) return "N/A";
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
 
-      const date = new Date(dateString);
-      if (isNaN(date)) return dateString;
+        return `${day}/${month}/${year}`;
+      }
 
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
+      function sortDataByDate(data) {
+        return data.sort((a, b) => {
+          const possibleDateFields = [
+            "prediction_date",
+            "prediction_at",
+            "date",
+            "created_at",
+          ];
 
-      return `${day}/${month}/${year}`;
-    }
+          let dateA = null;
+          let dateB = null;
 
-    function sortDataByDate(data) {
-      return data.sort((a, b) => {
-        const possibleDateFields = [
-          "prediction_date",
-          "prediction_at",
-          "date",
-          "created_at",
-        ];
-
-        let dateA = null;
-        let dateB = null;
-
-        for (const field of possibleDateFields) {
-          if (a[field]) {
-            dateA = new Date(a[field]);
-            break;
-          }
-        }
-
-        for (const field of possibleDateFields) {
-          if (b[field]) {
-            dateB = new Date(b[field]);
-            break;
-          }
-        }
-
-        if (dateA && dateB && !isNaN(dateA) && !isNaN(dateB)) {
-          return dateB - dateA;
-        }
-
-        if (!dateA || isNaN(dateA)) return 1;
-        if (!dateB || isNaN(dateB)) return -1;
-
-        return 0;
-      });
-    }
-
-    function fetchPredictionHistory() {
-      console.log("Starting history fetch...");
-      const accessToken = "{{ token }}";
-
-      document.getElementById("loading-state").style.display = "block";
-      document.getElementById("error-state").style.display = "none";
-      document.getElementById("empty-state").style.display = "none";
-      document.getElementById("history-table").style.display = "none";
-
-      const apiUrl = "/api/ml/predict/histories";
-      console.log("Fetching from:", apiUrl);
-
-      fetch("/api/ml/predict/histories", {
-        method: "GET",
-        headers: {
-          'X-Timezone': 'Asia/Jakarta',
-          "Authorization": `Bearer ${accessToken}`,  // pastikan accessToken valid
-          "Content-Type": "application/json"
-        }
-      })
-        .then((response) => {
-          console.log("API Status:", response.status);
-          if (!response.ok) {
-            throw new Error(`Network response error: ${response.status}`);
-          }
-          return response.text();
-        })
-        .then((text) => {
-          console.log("Raw API response:", text);
-
-          let data;
-          try {
-            data = JSON.parse(text);
-            console.log("Parsed data:", data);
-          } catch (e) {
-            console.error("Failed to parse response as JSON:", e);
-            throw new Error("Invalid JSON response");
-          }
-
-          return data;
-        })
-        .then((data) => {
-          console.log("Response type:", typeof data);
-          if (data === null) {
-            console.log("Response is null");
-          } else if (Array.isArray(data)) {
-            console.log("Response is an array with", data.length, "items");
-          } else if (typeof data === "object") {
-            console.log(
-              "Response is an object with keys:",
-              Object.keys(data)
-            );
-
-            if (data.histories) {
-              console.log(
-                "Found histories array with",
-                data.histories.length,
-                "items"
-              );
-              if (data.histories.length > 0) {
-                console.log(
-                  "First history item keys:",
-                  Object.keys(data.histories[0])
-                );
-              }
+          for (const field of possibleDateFields) {
+            if (a[field]) {
+              dateA = new Date(a[field]);
+              break;
             }
           }
 
-          document.getElementById("loading-state").style.display = "none";
+          for (const field of possibleDateFields) {
+            if (b[field]) {
+              dateB = new Date(b[field]);
+              break;
+            }
+          }
 
-          let histories =
-            data && data.histories
-              ? data.histories
-              : Array.isArray(data)
+          if (dateA && dateB && !isNaN(dateA) && !isNaN(dateB)) {
+            return dateB - dateA;
+          }
+
+          if (!dateA || isNaN(dateA)) return 1;
+          if (!dateB || isNaN(dateB)) return -1;
+
+          return 0;
+        });
+      }
+
+      function fetchPredictionHistory() {
+        console.log("Starting history fetch...");
+
+        document.getElementById("loading-state").style.display = "block";
+        document.getElementById("error-state").style.display = "none";
+        document.getElementById("empty-state").style.display = "none";
+        document.getElementById("history-table").style.display = "none";
+
+        const apiUrl = "/api/ml/predict/histories";
+        console.log("Fetching from:", apiUrl);
+
+        fetch(apiUrl)
+          .then((response) => {
+            console.log("API Status:", response.status);
+            if (!response.ok) {
+              throw new Error(`Network response error: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then((text) => {
+            console.log("Raw API response:", text);
+
+            let data;
+            try {
+              data = JSON.parse(text);
+              console.log("Parsed data:", data);
+            } catch (e) {
+              console.error("Failed to parse response as JSON:", e);
+              throw new Error("Invalid JSON response");
+            }
+
+            return data;
+          })
+          .then((data) => {
+            console.log("Response type:", typeof data);
+            if (data === null) {
+              console.log("Response is null");
+            } else if (Array.isArray(data)) {
+              console.log("Response is an array with", data.length, "items");
+            } else if (typeof data === "object") {
+              console.log(
+                "Response is an object with keys:",
+                Object.keys(data)
+              );
+
+              if (data.histories) {
+                console.log(
+                  "Found histories array with",
+                  data.histories.length,
+                  "items"
+                );
+                if (data.histories.length > 0) {
+                  console.log(
+                    "First history item keys:",
+                    Object.keys(data.histories[0])
+                  );
+                }
+              }
+            }
+
+            document.getElementById("loading-state").style.display = "none";
+
+            let histories =
+              data && data.histories
+                ? data.histories
+                : Array.isArray(data)
                 ? data
                 : [];
 
-          console.log("Processed histories array:", histories);
+            console.log("Processed histories array:", histories);
 
-          if (histories && Array.isArray(histories) && histories.length > 0) {
-            histories = sortDataByDate(histories);
-            console.log("Sorted histories:", histories);
+            if (histories && Array.isArray(histories) && histories.length > 0) {
+              histories = sortDataByDate(histories);
+              console.log("Sorted histories:", histories);
 
-            const historyTable = document.getElementById("history-table");
-            const historyData = document.getElementById("history-data");
+              const historyTable = document.getElementById("history-table");
+              const historyData = document.getElementById("history-data");
 
-            historyData.innerHTML = "";
+              historyData.innerHTML = "";
 
-            histories.forEach((item, index) => {
-              console.log(`Processing item ${index}:`, item);
+              histories.forEach((item, index) => {
+                console.log(`Processing item ${index}:`, item);
 
-              const row = document.createElement("tr");
+                const row = document.createElement("tr");
 
-              const sequentialNumber = index + 1;
+                const sequentialNumber = index + 1;
 
-              if (!item || !item.id) {
-                console.error(
-                  "Item missing ID, will try to use index instead:",
-                  item
-                );
+                if (!item || !item.id) {
+                  console.error(
+                    "Item missing ID, will try to use index instead:",
+                    item
+                  );
 
-                item.id = item.id || `item-${index}`;
-              }
-
-              let dateValue = null;
-              const possibleDateFields = [
-                "prediction_date",
-                "prediction_at",
-                "date",
-                "created_at",
-              ];
-              for (const field of possibleDateFields) {
-                if (item[field]) {
-                  dateValue = item[field];
-                  console.log(`Found date in field '${field}':`, dateValue);
-                  break;
+                  item.id = item.id || `item-${index}`;
                 }
-              }
 
-              const formattedDate = formatDate(dateValue);
+                let dateValue = null;
+                const possibleDateFields = [
+                  "prediction_date",
+                  "prediction_at",
+                  "date",
+                  "created_at",
+                ];
+                for (const field of possibleDateFields) {
+                  if (item[field]) {
+                    dateValue = item[field];
+                    console.log(`Found date in field '${field}':`, dateValue);
+                    break;
+                  }
+                }
 
-              console.log("Adding row with:", {
-                number: sequentialNumber,
-                id: item.id,
-                date: formattedDate,
-              });
-              const accessToken = "{{ token }}";
-              const getDetailData = function (id) {
-                return function () {
-                  const requestBody = {
-                    id: id,
+                const formattedDate = formatDate(dateValue);
+
+                console.log("Adding row with:", {
+                  number: sequentialNumber,
+                  id: item.id,
+                  date: formattedDate,
+                });
+
+                const getDetailData = function (id) {
+                  return function () {
+                    const requestBody = {
+                      id: id,
+                    };
+
+                    fetch("/api/ml/predict/histories/detail", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(requestBody),
+                    })
+                      .then((response) => {
+                        if (!response.ok) {
+                          throw new Error("Failed to fetch detail data");
+                        }
+                        return response.json();
+                      })
+                      .then((detailData) => {
+                        window.location.href = `/history/detail?id=${id}`;
+                      })
+                      .catch((error) => {
+                        console.error("Error fetching detail data:", error);
+                        alert("Error loading detail data. Please try again.");
+                      });
                   };
-
-                  fetch("/api/ml/predict/histories/detail", {
-                    method: "POST",
-                    headers: {
-                      'X-Timezone': 'Asia/Jakarta',
-                      "Content-Type": "application/json",
-                      "Authorization": `Bearer ${accessToken}`,  // pastikan accessToken valid
-
-                    },
-                    body: JSON.stringify(requestBody),
-                  })
-                    .then((response) => {
-                      if (!response.ok) {
-                        throw new Error("Failed to fetch detail data");
-                      }
-                      return response.json();
-                    })
-                    .then((detailData) => {
-                      window.location.href = `/history/detail?id=${id}`;
-                    })
-                    .catch((error) => {
-                      console.error("Error fetching detail data:", error);
-                      alert("Error loading detail data. Please try again.");
-                    });
                 };
-              };
 
-              row.innerHTML = `
+                row.innerHTML = `
                   <td>${sequentialNumber}</td>
                   <td>${formattedDate}</td>
                   <td>
@@ -381,30 +391,29 @@
                   </td>
                 `;
 
-              row
-                .querySelector(".detail-button")
-                .addEventListener("click", getDetailData(item.id));
+                row
+                  .querySelector(".detail-button")
+                  .addEventListener("click", getDetailData(item.id));
 
-              historyData.appendChild(row);
-            });
+                historyData.appendChild(row);
+              });
 
-            historyTable.style.display = "table";
-          } else {
-            console.log("No history data found or empty array");
-            document.getElementById("empty-state").style.display = "block";
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching prediction history:", error);
-          document.getElementById("loading-state").style.display = "none";
-          document.getElementById("error-state").style.display = "block";
+              historyTable.style.display = "table";
+            } else {
+              console.log("No history data found or empty array");
+              document.getElementById("empty-state").style.display = "block";
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching prediction history:", error);
+            document.getElementById("loading-state").style.display = "none";
+            document.getElementById("error-state").style.display = "block";
 
-          const errorElem = document.getElementById("error-state");
-          const paragraph = errorElem.querySelector("p");
-          paragraph.textContent = `Gagal memuat data riwayat prediksi: ${error.message}`;
-        });
-    }
-  </script>
-</body>
-
+            const errorElem = document.getElementById("error-state");
+            const paragraph = errorElem.querySelector("p");
+            paragraph.textContent = `Gagal memuat data riwayat prediksi: ${error.message}`;
+          });
+      }
+    </script>
+  </body>
 </html>

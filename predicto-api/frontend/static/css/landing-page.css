@@ -235,10 +235,12 @@ img {
 }
 
 .pricing-cards {
+  margin-top: 70px;
   display: flex;
   flex-wrap: wrap;
   gap: 30px;
   justify-content: center;
+  align-items: stretch;
 }
 
 .pricing-card {
@@ -252,6 +254,43 @@ img {
   background-color: white;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   text-align: center;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.pricing-card.popular {
+  border: 2px solid var(--primary-color);
+  position: relative;
+  transform: scale(1.05);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pricing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.subscribe-btn {
+  margin-top: auto;
+  width: 100%;
+  padding: 12px 20px;
+  text-align: center;
+  display: block;
 }
 
 .plan-name {
@@ -275,8 +314,9 @@ img {
 }
 
 .features-list {
-  margin: 30px 0;
+  margin: 30px 0 20px;
   text-align: left;
+  flex: 1;
 }
 
 .features-list li {
@@ -468,6 +508,11 @@ img {
 }
 
 @media (max-width: 768px) {
+  .pricing-card.popular {
+    transform: none;
+    margin: 20px 0;
+  }
+
   .team-cards {
     grid-template-columns: 1fr;
     max-width: 500px;
@@ -476,6 +521,17 @@ img {
   .team-card {
     min-width: 45%;
     padding: 20px 15px;
+  }
+
+  .hero {
+    padding: 120px 0 60px;
+    min-height: calc(100vh - 70px);
+    display: flex;
+    align-items: center;
+  }
+
+  .hero .container {
+    width: 100%;
   }
 
   .hero h1 {
@@ -714,6 +770,11 @@ body.no-scroll {
     padding: 0 8px;
   }
 
+  .hero {
+    padding: 100px 0 40px;
+    min-height: calc(100vh - 60px);
+  }
+
   .hero h1 {
     font-size: 2.5rem;
   }
@@ -863,11 +924,13 @@ body.no-scroll {
   }
 
   .plan-name {
-    font-size: 1.3rem;
+    margin-top: 10px;
+    font-size: 1.7rem;
   }
 
   .price {
-    font-size: 1.8rem;
+    font-size: 1.9rem;
+    margin-top: -17px;
   }
 
   .features-list li {
@@ -943,11 +1006,13 @@ body.no-scroll {
   }
 
   .plan-name {
-    font-size: 1.2rem;
+    margin-top: 10px;
+    font-size: 1.7rem;
   }
 
   .price {
-    font-size: 1.6rem;
+    font-size: 1.9rem;
+    margin-top: -17px;
   }
 
   .team-card {
@@ -957,5 +1022,9 @@ body.no-scroll {
   .btn-primary,
   .btn-secondary {
     text-align: center;
+  }
+
+  .footer-content {
+    margin-left: 5px;
   }
 }

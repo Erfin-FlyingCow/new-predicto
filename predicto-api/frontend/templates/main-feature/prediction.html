@@ -466,7 +466,6 @@
         const predictionTable = document.getElementById("prediction-table");
         const periodSelect = document.getElementById("prediction-period");
         const selectedPeriod = periodSelect.value;
-        const accessToken = "{{ token }}";
 
         if (
           !predictionTable ||
@@ -540,7 +539,6 @@
         fetch("/api/ml/predict/save", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${accessToken}`, 
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestData),

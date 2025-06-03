@@ -245,14 +245,10 @@
         document.getElementById("error-state").style.display = "none";
         document.getElementById("prediction-detail").style.display = "none";
 
-
-        const accessToken = "{{ token }}";
         fetch("/api/ml/predict/histories/detail", {
           method: "POST",
           headers: {
-            'X-Timezone': 'Asia/Jakarta',
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`, 
           },
           body: JSON.stringify({ id: predictionId }),
         })
